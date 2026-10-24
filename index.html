@@ -248,8 +248,9 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ------------------------------------------------------------------ config */
-// civicAPI is CORS-open and keyless. On election night point API at a small cached proxy
-// (a Cloudflare Worker or edge function polling every 30-60 s) and nothing else changes.
+// Data comes through a small shared cache (supabase/functions/elections-cache): one refresh of
+// civicAPI per 30 s for everyone watching. If it fails the page asks civicAPI directly, and if
+// that fails too it falls back to the snapshots in data/. Add ?cache=off to skip the cache.
 const API = 'https://civicapi.org/api/v2';
 const POLL_MS = 60000;
 const LIVE_FROM = Date.UTC(2026, 10, 3, 10, 0);          // 3 Nov 2026, 10:00 UTC
@@ -265,9 +266,10 @@ const GRID = {AK:[0,0],ME:[10,0],WI:[5,1],VT:[9,1],NH:[10,1],WA:[0,2],ID:[1,2],M
   AZ:[1,5],NM:[2,5],KS:[3,5],AR:[4,5],TN:[5,5],NC:[6,5],SC:[7,5],OK:[3,6],LA:[4,6],MS:[5,6],AL:[6,6],GA:[7,6],HI:[0,7],TX:[3,7],FL:[8,7]};
 
 const Q = new URLSearchParams(location.search);
+const CACHE = Q.get('cache') === 'off' ? null : 'https://atgelibbknccvxtuolay.supabase.co/functions/v1/elections-cache';
 // ?demo=0.6 paints a pretend election night (60% of races reported) over the real forecast
 const DEMO = Q.has('demo') ? Math.min(1, Math.max(0, parseFloat(Q.get('demo')) || 0.55)) : null;
-const LIVE = DEMO !== null || Date.now() >= LIVE_FROM;
+let LIVE = DEMO !== null || Date.now() >= LIVE_FROM;   // flips by itself when election day arrives, see boot
 
 const S = {ch:'house', key:null, fc:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}};
 
@@ -283,20 +285,37 @@ async function getJSON(url, fallback) {
     return {data: await r.json(), live: false};
   }
 }
+async function fromCache(kind) {
+  if (!CACHE) return null;
+  try {
+    const r = await fetch(`${CACHE}?k=${kind}`, {cache:'no-store'});
+    if (!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    if (!d.house || !d.senate || !d.gov) throw new Error('incomplete');
+    return d;
+  } catch (e) { console.warn('cache', kind, String(e)); return null; }
+}
 async function pullForecasts() {
+  const c = await fromCache('forecast');
+  if (c) { for (const k of Object.keys(CH)) S.fc[k] = c[k]; S.src.fc = 'live'; return; }
   await Promise.all(Object.entries(CH).map(async ([k, c]) => {
     const {data, live} = await getJSON(`${API}/forecast/${c.fc}/2026/civicapi`, `data/forecast-${k}.json`);
     S.fc[k] = data; S.src.fc = live ? 'live' : (S.src.fc || 'snapshot');
   }));
 }
+function ingestResults(k, data, live) {
+  if (!live && S.res[k]?._live) return;   // keep the last good live copy rather than fall back to a stale file
+  if (DEMO !== null) data = demoize(k, data);
+  data._live = live; S.res[k] = data; S.src.res = live ? 'live' : (S.src.res || 'snapshot');
+  for (const [rk, r] of Object.entries(data.region_results || {})) if (r.name) S.names[k + ':' + rk] = r.name;
+}
 async function pullResults() {
-  await Promise.all(Object.entries(CH).map(async ([k, c]) => {
+  const c = await fromCache('results');
+  if (c) { for (const k of Object.keys(CH)) ingestResults(k, c[k], true); return; }
+  await Promise.all(Object.entries(CH).map(async ([k, ch]) => {
     try {
-      let {data, live} = await getJSON(`${API}/race/${c.race}`, `data/results-${k}.json`);
-      if (!live && S.res[k]?._live) return;   // keep the last good live copy rather than fall back to a stale file
-      if (DEMO !== null) data = demoize(k, data);
-      data._live = live; S.res[k] = data; S.src.res = live ? 'live' : (S.src.res || 'snapshot');
-      for (const [rk, r] of Object.entries(data.region_results || {})) if (r.name) S.names[k + ':' + rk] = r.name;
+      const {data, live} = await getJSON(`${API}/race/${ch.race}`, `data/results-${k}.json`);
+      ingestResults(k, data, live);
     } catch (e) { console.warn('results', k, e); }
   }));
 }
@@ -571,7 +590,17 @@ document.addEventListener('mouseleave', () => tip.style.display = 'none');
     return;
   }
   render();
-  if (LIVE) setInterval(() => { if (!document.hidden) pullResults().then(render); }, POLL_MS);
+  // Results: every minute once it is election day, but only while the tab is visible, and straight
+  // away when you come back to it. A tab opened before election day flips into results mode by
+  // itself, so nobody has to reload on the morning.
+  let timer = null;
+  const tick = async () => { if (document.hidden) return; await pullResults(); render(); };
+  const startPolling = () => { if (!timer) timer = setInterval(tick, POLL_MS); };
+  if (LIVE) startPolling();
+  else setInterval(() => { if (!LIVE && Date.now() >= LIVE_FROM) { LIVE = true; startPolling(); tick(); } }, 20000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && LIVE) tick(); });
+  // The forecast moves slowly, but a tab left open for days should still pick up a new one.
+  setInterval(() => { if (!document.hidden) pullForecasts().then(render); }, 600000);
 })();
 })();
 </script>

@@ -27,6 +27,35 @@ python3 -m http.server 8830     # from this folder; file:// won't work (snapshot
 - From 3 Nov 10:00 UTC the page polls results every 60 s: called seats go solid party colour,
   uncalled ones fade, a white cap marks a call against the forecast's lean.
 
+## How fresh data gets to the page
+
+```
+civicAPI  <--  elections-cache (Supabase edge function)  <--  every browser
+                 |-- public.elections_cache (one row per feed: last payload + refresh lock)
+```
+
+- **Page:** forecast on load and every 10 min; results on load, then every 60 s once it is election
+  day (from 3 Nov 10:00 UTC, 5 am Eastern), only while the tab is visible and again the moment you
+  return to it. A tab opened before election day flips into results mode by itself.
+- **Cache** (`supabase/functions/elections-cache`, project `atgelibbknccvxtuolay`, public, no JWT):
+  results live 30 s, forecast 10 min. One conditional UPDATE is the lock, so of any number of
+  simultaneous requests exactly one refreshes from civicAPI and the rest are served the stored copy
+  at once (`X-Cache: hit | miss | stale | direct`). Tested: 30 parallel requests at expiry gave 1
+  refresh and 29 `stale`. If civicAPI is down, the last good copy is served.
+- **Why a table:** Supabase starts a fresh instance for most requests, so an in-memory cache
+  measured 1 hit in 22. Do not go back to one. Its CDN does not cache function responses either.
+- **Fallbacks, in order:** the cache, then civicAPI directly, then the snapshots in `data/`.
+  `?cache=off` skips the cache, handy for comparing.
+- **Worst-case lag** from civicAPI publishing to your screen: 30 s cache + 60 s poll, about 90 s.
+- **The table** is `public.elections_cache`: RLS on, no policies, no grants to anon or
+  authenticated (checked), so only the function's service role can touch it. Migration in
+  `supabase/migrations/`. The function holds the service-role key; nothing from a request is ever
+  put into an upstream URL.
+- **Quota:** one function call per viewer per minute while live. Watch the Supabase function
+  invocation count on the night; the free tier is 500k a month.
+- Redeploy the function with the Supabase MCP `deploy_edge_function` (`verify_jwt: false`) using
+  `supabase/functions/elections-cache/index.ts` as the file.
+
 ## civicAPI, as found (docs page is JS-rendered; routes were read from its bundle)
 
 Base `https://civicapi.org/api/v2`, keyless, CORS `*`. Attribution link required (it is in the top bar).
@@ -60,9 +89,8 @@ workshop card; the version badge on the page fills from it. OG tags + `img/og.pn
 
 Still to do:
 
-1. Cache proxy for the three `race/` calls (Cloudflare Worker / edge function polling every
-   30-60 s); change `API` in `index.html`. Free APIs get hammered on election night.
-2. Check the real feed once on a day that has results, not only `?demo`.
-3. Run the URL through LinkedIn Post Inspector to force the preview scrape.
-4. Optional layers: FEC money-vs-votes, Polymarket/Kalshi odds line. Re-capture `og.png` on the
+1. Check the real feed once on a day that has results, not only `?demo`. Measure how often civicAPI
+   actually publishes new counts; the cache and poll intervals assume about a minute.
+2. Run the URL through LinkedIn Post Inspector to force the preview scrape.
+3. Optional layers: FEC money-vs-votes, Polymarket/Kalshi odds line. Re-capture `og.png` on the
    night if the page looks better filled in.
