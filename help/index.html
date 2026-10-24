@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>US Midterms 2026 — Guide: how to read it</title>
+<meta name="theme-color" content="#090b12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23090b12'/%3E%3Crect x='4' y='10' width='12' height='12' fill='%233a82e8'/%3E%3Crect x='16' y='10' width='12' height='12' fill='%23f0584a'/%3E%3C/svg%3E">
+<meta name="description" content="How to read the US Midterms 2026 page: what the forecast shows today, where the numbers come from, and exactly what changes on the page once votes start to be counted on 3 November.">
+<link rel="canonical" href="https://elections.aguywithascarf.com/help/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="A Guy With A Scarf">
+<meta property="og:title" content="US Midterms 2026 — Guide: how to read it">
+<meta property="og:description" content="What the forecast shows today, where the numbers come from, and exactly what changes on the page once votes start to be counted on 3 November.">
+<meta property="og:url" content="https://elections.aguywithascarf.com/help/">
+<meta property="og:image" content="https://elections.aguywithascarf.com/img/og.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="US Midterms 2026 — Guide: how to read it">
+<meta name="twitter:description" content="What the forecast shows today, and what changes once votes start to be counted.">
+<meta name="twitter:image" content="https://elections.aguywithascarf.com/img/og.png?v=1">
+<!-- Umami --><script>try{/[?&#]noumami\b/.test(location.href)&&localStorage.setItem('umami.disabled','1')}catch(e){}</script><script defer src="https://m.aguywithascarf.com/k.js" data-website-id="da7c4444-fe20-4f84-baaf-47d34355418b"></script>
+<script defer src="https://dataviz.aguywithascarf.com/ver.js"></script><!-- End Umami -->
+<style>
+:root{
+  --bg:#090b12; --ink:#e8ecf5; --dim:#8b96ad; --faint:#5d6679;
+  --pan:rgba(255,255,255,.05); --line:rgba(150,166,205,.15);
+  --r0:#2f88f5; --r1:#3d7bd6; --r2:#4670b8; --r3:#4f6a9a; --r4:#686a72;
+  --r5:#98605a; --r6:#b85c52; --r7:#d85a48; --r8:#f2564a;
+  --calD:#2f86ff; --calR:#ff4a3d; --calO:#e0b84a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg);scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:300;
+  -webkit-font-smoothing:antialiased;line-height:1.6}
+a{color:var(--ink)}
+b,strong{font-weight:700}
+#top{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:10px 16px;background:rgba(9,11,18,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);font-size:12px;color:var(--dim)}
+#top b{color:var(--ink)}
+.pill{border:1px solid var(--line);color:var(--ink);border-radius:99px;padding:6px 14px;text-decoration:none;font-size:12px}
+.pill:hover{border-color:rgba(150,166,205,.4)}
+.pill.on{background:var(--ink);color:#0a0d14;font-weight:700;border-color:var(--ink)}
+main{max-width:760px;margin:0 auto;padding:34px 18px 70px}
+h1{font-size:clamp(28px,6vw,44px);font-weight:700;letter-spacing:-.02em;line-height:1.08;margin-bottom:14px}
+.lede{font-size:17px;color:var(--dim);margin-bottom:26px}
+h2{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:46px 0 10px}
+h2 small{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+h3{font-size:15px;font-weight:700;margin:22px 0 4px}
+p{margin:10px 0}
+p.dim,.dim{color:var(--dim)}
+ul{margin:10px 0 10px 20px}
+li{margin:5px 0}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+.card{background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:16px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td:first-child a{font-weight:700}
+.n{font-variant-numeric:tabular-nums;font-weight:700}
+.sw{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.tblwrap{overflow-x:auto}
+
+/* the little illustrations reuse the app's own colours and states */
+.stage{margin:14px 0 4px}
+.stage .cap{font-size:12px;color:var(--dim);margin:0 0 6px}
+.stage .cap b{color:var(--ink)}
+.mini{display:flex;gap:2px;height:42px}
+.mini i{flex:1 1 0;border-radius:2px;position:relative;background:var(--c)}
+.r0{--c:var(--r0)}.r1{--c:var(--r1)}.r2{--c:var(--r2)}.r3{--c:var(--r3)}
+.r4{--c:var(--r4);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.32) 0 2px,transparent 2px 5px)}
+.r5{--c:var(--r5)}.r6{--c:var(--r6)}.r7{--c:var(--r7)}.r8{--c:var(--r8)}
+.p{opacity:.3}
+.c{animation:pulse 1.5s ease-in-out infinite}
+.cD{--c:var(--calD);background-image:none}.cR{--c:var(--calR);background-image:none}.cO{--c:var(--calO);background-image:none}
+.up::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:#fff}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.c{animation:none}}
+.key{display:grid;grid-template-columns:62px 1fr;gap:6px 14px;align-items:center;margin:14px 0}
+.key .mini{height:30px}
+.key .mini i{border-radius:2px}
+.key .mini.one{width:62px}
+.key span{font-size:14px}
+.key span b{display:block}
+.note{border-left:3px solid var(--line);padding:2px 0 2px 14px;color:var(--dim);margin:14px 0}
+.note b{color:var(--ink)}
+#foot{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--faint);line-height:1.7}
+#foot a{color:var(--dim)}
+</style>
+</head>
+<body>
+<div id="top">
+  <span><b>US Midterms 2026</b> · Guide</span>
+  <a class="pill on" href="../">← Back to the page</a>
+</div>
+
+<main>
+  <h1>How to read the midterms page</h1>
+  <p class="lede">Today it shows a forecast. On 3 November it turns into a scoreboard. This guide explains both: what every colour means now, and exactly what changes once votes are counted.</p>
+  <div class="toc">
+    <a class="pill" href="#now">What you see now</a>
+    <a class="pill" href="#numbers">Where the numbers come from</a>
+    <a class="pill" href="#night">When counting starts</a>
+    <a class="pill" href="#careful">Reading it carefully</a>
+    <a class="pill" href="#demo">See it in action</a>
+  </div>
+
+  <h2 id="now"><small>Before the vote</small>What you are seeing now</h2>
+  <p>On 3 November Americans elect all 435 members of the House, 35 of the 100 senators and 36 of the 50 governors. Nothing has been counted yet. The page therefore shows a <strong>forecast</strong>: how likely each race is to go to each party.</p>
+
+  <div class="card" id="rightnow">
+    <p class="dim" id="rn-head">Loading today's forecast…</p>
+    <div class="tblwrap"><table id="rn-tbl" hidden>
+      <thead><tr><th>Chamber</th><th>Democratic-leaning</th><th>Tossup</th><th>Republican-leaning</th><th>Chance of control</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="dim" style="font-size:13px;margin-bottom:0">Seat counts include the seats not up this year. Chance of control is the share of 65,000 simulated elections in which that party ends with a majority.</p>
+  </div>
+
+  <h3>The bar</h3>
+  <p>The long bar is every seat in the chamber, one slice each. Slices run from the <strong>safest Democratic seat on the left</strong> to the <strong>safest Republican seat on the right</strong>, so the contested seats gather in the middle. The white line marks the majority: 218 seats in the House, 51 in the Senate, 26 of 50 governorships. A party controls the chamber if its colour reaches past the line, counted from its own end. In the Senate, a 50–50 split goes to the party of the Vice President, who casts the tie-breaking vote.</p>
+  <p>In the Senate and the governors' bar, the dimmed slices at each end are seats that are <strong>not on the ballot this year</strong>. They are already decided, so they simply count towards each side's total.</p>
+
+  <div class="key">
+    <div class="mini one"><i class="r0"></i><i class="r1"></i><i class="r2"></i><i class="r3"></i></div>
+    <span><b>Safe, Likely, Lean, Tilt Democratic</b>from surest to least sure; the further from grey, the safer</span>
+    <div class="mini one"><i class="r4"></i></div>
+    <span><b>Tossup</b>grey with stripes; the forecast cannot separate the two parties</span>
+    <div class="mini one"><i class="r5"></i><i class="r6"></i><i class="r7"></i><i class="r8"></i></div>
+    <span><b>Tilt, Lean, Likely, Safe Republican</b>the same four steps on the red side</span>
+  </div>
+
+  <h3>The odds bar</h3>
+  <p>At the top right, the blue and red bar is each party's <strong>chance of controlling the chamber</strong>. The grey stretch in the middle is the share of simulations where neither side reaches a majority, such as a 50–50 Senate or a tie. It is not a third party.</p>
+
+  <h3>The state map</h3>
+  <p>Below the bar, the country is drawn as a grid of tiles, one per state. In the House view each tile holds one square per district (California has 52), and in the Senate and governors views each tile is a single square. Dashed, empty tiles are states with no race in that chamber this year.</p>
+
+  <h3>One race</h3>
+  <p>Click any slice, square or tile to open that race on the right: the rating, the two main candidates and each one's <strong>forecast chance of winning</strong>. That is a probability, not a share of the vote. A seat rated 97% Republican does not mean Republicans will win 97% of the ballots. The table at the foot of the page lists every race with the same numbers, and it is the best view for a screen reader or for sorting your own way. The address updates as you click, so you can share a chamber or a single race.</p>
+
+  <h2 id="numbers"><small>The source</small>Where the numbers come from</h2>
+  <p>Everything on the page comes from <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a>, a free election data service. Its forecast combines five kinds of evidence: expert ratings from the main political forecasters, betting markets, candidate fundraising, polls and outside spending. It then runs the election 65,000 times to turn those ratings into chances of winning and chances of control. We add nothing and change nothing: this page is a way of looking at their numbers.</p>
+  <p>The forecast is refreshed by civicAPI, not by us, and the page shows the date of its last update in the top bar. A forecast is a statement of likelihood. An 8% chance still happens about one time in twelve.</p>
+
+  <h2 id="night"><small>From 3 November</small>What changes when votes are counted</h2>
+  <p>From the morning of election day (5 am Eastern) the page switches itself into <strong>results mode</strong>. You do not need to do anything. The top bar changes from "days to election day" to <strong>live</strong>, and the page checks civicAPI for new results about once a minute while the tab is open. Polls close across the United States through the evening, so the page fills in gradually.</p>
+
+  <h3>1. Before anything reports</h3>
+  <p>Every slice goes <strong>faded</strong>. That is deliberate: it means "no result yet", and it makes a seat that does report stand out the moment it does. Do not be alarmed if the whole page looks dim in the morning.</p>
+
+  <h3>2. While votes are coming in</h3>
+  <p>A seat with votes in but no winner declared <strong>pulses gently</strong>. Click it and the race panel shows the live count: each candidate's votes and share, and the percentage of the vote reporting. The slice keeps its place in the bar.</p>
+
+  <h3>3. When civicAPI calls a race</h3>
+  <p>The slice turns <strong>solid</strong> in the winning party's full colour: bright blue for a Democrat, bright red for a Republican, gold for an independent or third party. The race panel marks the winner with a tick. The line above the bar, <em>Called so far</em>, adds up the called races plus the seats that were never up, and tells you when a party has reached its majority.</p>
+
+  <h3>4. When the result goes against the forecast</h3>
+  <p>If a race is called for the party the forecast did not favour, the slice or square gets a <strong>white cap</strong> (a white dot on the map). Tossups are never marked, because the forecast had no favourite. The bar never reorders, so the forecast's order stays in view and you can see at a glance where reality departs from it.</p>
+
+  <div class="stage"><p class="cap"><b>Before:</b> the forecast</p>
+    <div class="mini" data-mini="r0 r0 r1 r1 r2 r3 r4 r4 r5 r6 r7 r7 r8 r8 r8 r8" data-state=""></div></div>
+  <div class="stage"><p class="cap"><b>During:</b> some seats called, some counting, the rest still faded</p>
+    <div class="mini" data-mini="r0 r0 r1 r1 r2 r3 r4 r4 r5 r6 r7 r7 r8 r8 r8 r8" data-state="D D D c p c p c p R p c R p R p"></div></div>
+  <div class="stage"><p class="cap"><b>After:</b> every race called; the white caps are the surprises</p>
+    <div class="mini" data-mini="r0 r0 r1 r1 r2 r3 r4 r4 r5 r6 r7 r7 r8 r8 r8 r8" data-state="D D D D D R! D R D! R R R R R R R"></div></div>
+
+  <h3>What does not move</h3>
+  <p>The <strong>chance-of-control bar</strong> stays the pre-election forecast all night. It is not re-run as votes arrive, so use <em>Called so far</em> for the live picture. The ratings and the order of the bar also stay fixed. Only the colour of each slice changes.</p>
+
+  <h3>If the feed goes quiet</h3>
+  <p>If civicAPI cannot be reached, the page keeps the last results it received rather than going blank, and the top bar says it is showing a cached snapshot instead of live data. Reloading the page tries again.</p>
+
+  <h2 id="careful"><small>A few cautions</small>Reading it carefully</h2>
+  <ul>
+    <li><strong>Early counts mislead.</strong> The votes that arrive first are not a fair sample of the whole. Depending on the state, early returns can lean towards either party, so a seat showing 70% reporting is not the same as 70% decided.</li>
+    <li><strong>A call is a call, not a certificate.</strong> A race is marked solid when civicAPI declares a winner. Very close races can take days, and some go to recounts, in which case the slice stays pulsing until a winner is declared.</li>
+    <li><strong>Seats are not equal.</strong> Every slice looks the same size, but a Senate seat or a governorship matters far more than one House district. The bar is about counting seats, not weighing them.</li>
+    <li><strong>Colours do not carry the whole story.</strong> Every seat can also be hovered for its rating and matchup, and everything is in the table, so nothing depends on telling two shades apart.</li>
+  </ul>
+
+  <h2 id="demo"><small>Try it</small>See an election night before the real one</h2>
+  <p>You can preview the results mode now. Add <code>?demo=0.6</code> to the address and the page paints an <strong>invented</strong> election night over the real forecast, with 60% of races reported. The numbers are made up and the page says so at the top, but the pulsing, the solid colours and the white caps behave exactly as they will on the night.</p>
+  <p>
+    <a class="pill" href="../?demo=0.6#house">House, demo night</a>
+    <a class="pill" href="../?demo=0.6#senate">Senate, demo night</a>
+    <a class="pill" href="../?demo=0.6#gov">Governors, demo night</a>
+  </p>
+
+  <div id="foot">
+    <p>An independent fan project by <a href="https://dataviz.aguywithascarf.com/">A guy with a scarf</a> (Carlo De Marchis). Data: <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a>. Not affiliated with any party, campaign, news organisation or election authority, and not a substitute for official results.</p>
+    <p><a href="https://dataviz.aguywithascarf.com/releases/#midterms">Release notes</a> <a class="agwas-ver" data-agwas-ver="midterms" href="https://dataviz.aguywithascarf.com/releases/#midterms"></a></p>
+  </div>
+</main>
+
+<script>
+(() => {
+'use strict';
+const API = 'https://civicapi.org/api/v2';
+const CH = [['house','House','house',218],['senate','Senate','senate',51],['gov','Governors','governor',26]];
+
+/* the three little illustrations: classes per bar, then a state per bar
+   D / R / O = called, c = counting, p = not yet reported, a trailing ! = against the forecast */
+document.querySelectorAll('[data-mini]').forEach(el => {
+  const r = el.dataset.mini.split(' '), s = el.dataset.state ? el.dataset.state.split(' ') : [];
+  el.innerHTML = r.map((c, i) => {
+    const st = s[i] || '', up = st.endsWith('!'), k = st.replace('!', '');
+    const cls = [c, k === 'c' ? 'c' : k === 'p' ? 'p' : k ? 'c' + k : '', up ? 'up' : ''].filter(Boolean).join(' ');
+    return `<i class="${cls}"></i>`;
+  }).join('');
+});
+
+async function getJSON(url, fallback) {
+  try { const r = await fetch(url, {cache:'no-store'}); if (!r.ok) throw 0; return await r.json(); }
+  catch (e) { return (await fetch(fallback)).json(); }
+}
+(async () => {
+  try {
+    const fcs = await Promise.all(CH.map(([k,,slug]) => getJSON(`${API}/forecast/${slug}/2026/civicapi`, `../data/forecast-${k}.json`)));
+    const rows = CH.map(([k, label, , need], i) => {
+      const f = fcs[i], t = f.totals || {}, m = f.monte_carlo || {};
+      return `<tr><td><a href="../#${k}">${label}</a></td>
+        <td class="n"><span class="sw" style="background:var(--r0)"></span>${t.democrat ?? '–'}</td>
+        <td class="n"><span class="sw" style="background:var(--r4)"></span>${t.tossup ?? '–'}</td>
+        <td class="n"><span class="sw" style="background:var(--r8)"></span>${t.republican ?? '–'}</td>
+        <td>D <span class="n">${m.prob_democrat_majority ?? '–'}%</span> · R <span class="n">${m.prob_republican_majority ?? '–'}%</span></td></tr>`;
+    }).join('');
+    document.querySelector('#rn-tbl tbody').innerHTML = rows;
+    document.querySelector('#rn-tbl').hidden = false;
+    const upd = fcs[0].last_updated ? new Date(fcs[0].last_updated + 'T00:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'long', timeZone:'UTC'}) : '';
+    const days = Math.ceil((Date.UTC(2026, 10, 3, 12) - Date.now()) / 864e5);
+    const when = days > 1 ? `${days} days to election day` : days === 1 ? 'one day to election day' : days === 0 ? 'election day' : 'the votes are being counted: see the live page';
+    document.getElementById('rn-head').innerHTML = `<b>Right now</b> · ${when} · forecast updated ${upd}`;
+  } catch (e) {
+    document.getElementById('rn-head').textContent = 'The live forecast could not be loaded. The explanation below still applies.';
+  }
+})();
+})();
+</script>
+</body>
+</html>

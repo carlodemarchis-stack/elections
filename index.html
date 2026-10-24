@@ -64,6 +64,7 @@ button{font:inherit;color:inherit}
 .pill{border:1px solid var(--line);background:var(--pan2);color:var(--dim);border-radius:99px;
   padding:6px 14px;font-size:12px;cursor:pointer;letter-spacing:.02em}
 .pill:hover{color:var(--ink);border-color:rgba(150,166,205,.35)}
+a.pill{text-decoration:none}
 .pill.on{background:var(--ink);border-color:var(--ink);color:#0a0d14;font-weight:700}
 #credit{color:var(--dim);font-size:11px}
 #credit a{text-decoration:none;border-bottom:1px solid var(--line)}
@@ -192,6 +193,7 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
 <div id="topbar">
   <div id="ctx"><b>US Midterms 2026</b> · <span id="status">loading…</span></div>
   <div class="seg" id="chambers" role="tablist" aria-label="Chamber"></div>
+  <a class="pill" href="help/">Guide</a>
   <div id="credit">Data: <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a><a class="agwas-ver" data-agwas-ver="midterms" href="https://dataviz.aguywithascarf.com/releases/#midterms"></a></div>
 </div>
 
@@ -448,7 +450,10 @@ function renderCalled(ch, M) {
     else if (r.st === 'cnt') cnt++; else pend++;
   }
   const D = M.hold.D + cd, R = M.hold.R + cr, need = CH[ch].need;
-  const lead = ch === 'gov' ? '' : D >= need ? ` · <b>Democrats have reached ${need}</b>` : R >= (ch === 'senate' ? 50 : need) && ch !== 'house' ? '' : R >= need ? ` · <b>Republicans have reached ${need}</b>` : '';
+  // Senate: 50 is enough for the party that holds the Vice Presidency, so Republicans clear the line at 50
+  const rNeed = ch === 'senate' ? 50 : need;
+  const lead = ch === 'gov' ? (D >= need ? ` · <b>Democrats have a majority of governorships</b>` : R >= need ? ` · <b>Republicans have a majority of governorships</b>` : '')
+    : D >= need ? ` · <b>Democrats have reached ${need}</b>` : R >= rNeed ? ` · <b>Republicans have reached ${rNeed}${ch === 'senate' ? ' (the Vice President breaks ties)' : ''}</b>` : '';
   el.innerHTML = `${DEMO !== null ? '<b>Demo night</b> (invented results over the real forecast) · ' : ''}Called so far: <span class="dotD"></span><b>${D}</b> D · <span class="dotR"></span><b>${R}</b> R${co ? ` · <span class="dotO"></span><b>${co}</b> other` : ''} · ${cnt} counting · ${pend} yet to report${lead}`;
 }
 

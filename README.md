@@ -22,6 +22,8 @@ python3 -m http.server 8830     # from this folder; file:// won't work (snapshot
   Senate and governors include the seats not up this year as dimmed holdovers.
 - **State tiles**: House = one square per district; Senate / governors = one square per state.
 - Detail panel, hover tooltip, and a full table (the non-colour view).
+- `help/` is the guide page (linked from the top bar): today's numbers pulled live, plus a walkthrough of what
+  changes when votes are counted. If the results-mode behaviour in `index.html` changes, update it too.
 - From 3 Nov 10:00 UTC the page polls results every 60 s: called seats go solid party colour,
   uncalled ones fade, a white cap marks a call against the forecast's lean.
 
