@@ -103,8 +103,10 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .bandend b{color:var(--ink);font-size:20px;font-weight:700;margin:0 4px}
 .bandend .mid{text-align:center}
 
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:var(--dim);margin-top:14px}
-.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;font-size:11px;color:var(--dim);margin-top:14px}
+.legend .lg{display:flex;flex-direction:column;gap:3px}
+.legend .lt{display:inline-flex;align-items:center;gap:6px}
+.legend .lg b{padding-left:18px;font-size:18px;line-height:1.1;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
 .legend i{width:12px;height:12px;border-radius:2px;display:inline-block;background:var(--c)}
 
 /* rating colours, shared by the band, the tiles and the chips */
@@ -439,9 +441,18 @@ function render() {
   $('#bandend').innerHTML = `<span>Democratic<b>${D}</b>seats</span><span class="mid">Tossup<b>${T}</b></span><span style="text-align:right">Republican<b>${R}</b>seats</span>`;
   $('#bandh2').textContent = `Every seat, safest Democratic to safest Republican${M.hold.D + M.hold.R ? ' · dimmed seats are not up this year' : ''}`;
 
-  $('#legend').innerHTML = RATINGS.map((r, i) => `<span><i class="r${i}"></i>${r}</span>`).join('') +
-    (M.hold.D + M.hold.R ? `<span><i class="hD"></i><i class="hR" style="margin-left:-4px"></i>Not up</span>` : '') +
-    (LIVE ? `<span><i class="st-called cD"></i><i class="st-called cR" style="margin-left:-4px"></i>Called</span><span><i style="background:#fff;height:3px;margin-top:-6px"></i>Flipped against the forecast</span>` : '');
+  // each level with its seat count underneath; "Not up" carries the D and R holdovers, and on
+  // election night Called and Flipped carry live counts
+  const lg = (swatch, label, n) => `<span class="lg"><span class="lt">${swatch}${label}</span><b>${n}</b></span>`;
+  let nCalled = 0, nFlipped = 0;
+  if (LIVE) for (const s of M.seats) {
+    const r = result(ch, s.key);
+    if (r.st === 'called') { nCalled++; const lean = leanOf(s.rank); if (lean && lean !== r.party) nFlipped++; }
+  }
+  $('#legend').innerHTML = RATINGS.map((r, i) => lg(`<i class="r${i}"></i>`, r, M.seats.filter(s => s.rank === i).length)).join('') +
+    (M.hold.D + M.hold.R ? lg(`<i class="hD"></i><i class="hR" style="margin-left:-4px"></i>`, 'Not up', `${M.hold.D} D · ${M.hold.R} R`) : '') +
+    (LIVE ? lg(`<i class="st-called cD"></i><i class="st-called cR" style="margin-left:-4px"></i>`, 'Called', nCalled) +
+            lg(`<i style="background:#fff;height:3px;margin-top:-6px"></i>`, 'Flipped against the forecast', nFlipped) : '');
 
   renderCalled(ch, M);
   renderTiles(ch, M);
