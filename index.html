@@ -137,7 +137,7 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .st-called.cR{--c:var(--calR);background-image:none}
 .st-called.cO{--c:var(--calO);background-image:none}
 .upset::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:#fff}
-.tile .upset::after,.brow .upset::after{height:auto;bottom:auto;top:50%;left:50%;right:auto;width:35%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%)}
+.tile .upset::after,.sbox .upset::after{height:auto;bottom:auto;top:50%;left:50%;right:auto;width:35%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%)}
 .sel{outline:2px solid #fff;outline-offset:1px;z-index:3}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.live .st-cnt{animation:none}}
@@ -151,12 +151,14 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .pill.sm{padding:4px 11px;font-size:11px}
 #tilescroll{overflow-x:auto;padding-bottom:4px}
 /* equal blocks: one identical square per seat, one row per state, biggest state first */
-#blocks{display:grid;row-gap:7px}
-.brow{display:grid;grid-template-columns:54px minmax(0,1fr);align-items:start}
-.bsq{display:grid;grid-template-columns:repeat(var(--cols,20),minmax(0,1fr));gap:2px;max-width:calc(var(--cols,20) * 26px)}
-.brow .bl{display:flex;justify-content:space-between;align-items:baseline;padding:2px 6px 0 0;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--dim)}
-.brow .bl em{font-style:normal;font-size:12px;color:var(--ink);letter-spacing:0}
-.brow i{display:block;position:relative;aspect-ratio:1;cursor:pointer;background:var(--c);border-radius:2px}
+#blocks{--sq:22px;display:flex;flex-wrap:wrap;align-items:flex-start;gap:22px 20px}
+/* a state is a block five squares tall, filled top to bottom then left to right */
+.sbox{display:flex;flex-direction:column;gap:6px}
+.sbox .sl{display:flex;align-items:baseline;gap:6px;white-space:nowrap;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--dim)}
+.sbox .sl em{font-style:normal;font-size:14px;color:var(--ink);letter-spacing:0}
+.sbox .sg{display:grid;grid-auto-flow:column;grid-template-rows:repeat(5,var(--sq));grid-auto-columns:var(--sq);gap:3px}
+.sbox i{display:block;position:relative;cursor:pointer;background:var(--c);border-radius:2px}
+@media (max-width:700px){#blocks{--sq:18px;gap:18px 14px}}
 #tiles{display:grid;grid-template-columns:repeat(11,minmax(48px,1fr));grid-auto-rows:minmax(48px,auto);gap:4px;min-width:560px}
 .tile{position:relative;aspect-ratio:1;background:var(--pan);border-radius:5px;padding:3px;display:flex;flex-direction:column;min-width:0}
 .tile .ab{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--dim);line-height:1;margin:1px 2px 4px 2px;display:flex;justify-content:space-between;align-items:baseline}
@@ -605,23 +607,12 @@ function renderBlocks(ch, M) {
   for (const s of M.seats) (by[s.code.split('-')[0]] ||= []).push(s);
   // biggest state first, ties alphabetical; within a state safest Democratic to safest Republican
   const states = Object.entries(by).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
-  const el = $('#blocks');
-  el.dataset.max = states[0][1].length;
-  $('#mapH2').textContent = 'By state, biggest first · one block per district, safest Democratic to safest Republican';
-  el.innerHTML = states.map(([ab, ss]) => {
+  $('#mapH2').textContent = 'By state, biggest first · one block per district, five to a column, safest Democratic first';
+  $('#blocks').innerHTML = states.map(([ab, ss]) => {
     ss.sort((a, b) => a.rank - b.rank || b.f.democrat_pct - a.f.democrat_pct || a.code.localeCompare(b.code));
-    return `<div class="brow"><span class="bl">${ab}<em>${ss.length}</em></span><div class="bsq">${ss.map(s => `<i class="${seatCls(ch, s, false)}" data-key="${s.key}"></i>`).join('')}</div></div>`;
+    return `<div class="sbox"><div class="sl">${ab}<em>${ss.length}</em></div><div class="sg">${ss.map(s => `<i class="${seatCls(ch, s, false)}" data-key="${s.key}"></i>`).join('')}</div></div>`;
   }).join('');
-  fitBlocks();
 }
-// Every block is the same size; a long state (California, Texas) runs onto a second line rather
-// than shrinking the blocks or forcing a sideways scroll. About 18 px a block, whatever the width.
-function fitBlocks() {
-  const el = $('#blocks'); if (el.hidden) return;
-  const W = $('#tilescroll').clientWidth, max = +el.dataset.max || 1;
-  el.style.setProperty('--cols', Math.max(8, Math.min(max, Math.floor((W - 54) / 18))));
-}
-if (window.ResizeObserver) new ResizeObserver(fitBlocks).observe($('#tilescroll'));
 
 function renderTiles(ch, M) {
   const byState = {};
@@ -719,7 +710,7 @@ function tipHTML(el) {
   return h;
 }
 document.addEventListener('mousemove', e => {
-  const el = e.target.closest('#band .b, .tile .sqs i, .brow i, tr[data-key]');
+  const el = e.target.closest('#band .b, .tile .sqs i, .sbox i, tr[data-key]');
   if (!el || el.tagName === 'TR') { tip.style.display = 'none'; return; }
   tip.innerHTML = tipHTML(el); tip.style.display = 'block';
   const w = tip.offsetWidth, h = tip.offsetHeight;
