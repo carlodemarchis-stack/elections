@@ -99,7 +99,7 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 #maj{visibility:hidden;position:absolute;top:0;bottom:-8px;width:0;border-left:2px solid var(--ink);pointer-events:none}
 #maj span{position:absolute;top:0;left:6px;transform:translateY(-2px);white-space:nowrap;font-size:11px;font-weight:700;letter-spacing:.04em}
 #maj.flip span{left:auto;right:6px}
-.bandend{display:flex;justify-content:space-between;font-size:12px;margin-top:10px;color:var(--dim)}
+.bandend{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:8px;color:var(--dim)}
 .bandend b{color:var(--ink);font-size:20px;font-weight:700;margin:0 4px}
 .bandend .mid{text-align:center}
 
@@ -220,11 +220,11 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
   <div id="called"></div>
 
   <h2 id="bandh2"></h2>
+  <div class="bandend" id="bandend"></div>
   <div id="bandwrap">
     <div id="band" aria-label="Every seat in the chamber, safest Democratic on the left to safest Republican on the right"></div>
     <div id="maj"><span></span></div>
   </div>
-  <div class="bandend" id="bandend"></div>
   <div class="legend" id="legend"></div>
 
   <div class="cols">
