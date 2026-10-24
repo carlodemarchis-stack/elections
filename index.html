@@ -108,6 +108,13 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .legend .lt{display:inline-flex;align-items:center;gap:6px}
 .legend .lg b{padding-left:18px;font-size:18px;line-height:1.1;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
 .legend i{width:12px;height:12px;border-radius:2px;display:inline-block;background:var(--c)}
+.legend .ln{display:none}
+/* wide screens: each level sits under its own stretch of the bar, neighbours staggered onto a
+   second row, a hairline joining each label to its stretch (positions are set in layoutLegend) */
+.legend.al{display:block;position:relative;margin-top:0}
+.legend.al .lg{position:absolute;white-space:nowrap}
+.legend.al .ln{display:block;position:absolute;width:1px;background:rgba(150,166,205,.4)}
+#legend2:empty{display:none}
 
 /* rating colours, shared by the band, the tiles and the chips */
 .r0{--c:var(--r0)}.r1{--c:var(--r1)}.r2{--c:var(--r2)}.r3{--c:var(--r3)}
@@ -226,6 +233,7 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
     <div id="maj"><span></span></div>
   </div>
   <div class="legend" id="legend"></div>
+  <div class="legend" id="legend2"></div>
 
   <div class="cols">
     <div>
@@ -441,18 +449,27 @@ function render() {
   $('#bandend').innerHTML = `<span>Democratic<b>${D}</b>seats</span><span class="mid">Tossup<b>${T}</b></span><span style="text-align:right">Republican<b>${R}</b>seats</span>`;
   $('#bandh2').textContent = `Every seat, safest Democratic to safest Republican${M.hold.D + M.hold.R ? ' · dimmed seats are not up this year' : ''}`;
 
-  // each level with its seat count underneath; "Not up" carries the D and R holdovers, and on
-  // election night Called and Flipped carry live counts
-  const lg = (swatch, label, n) => `<span class="lg"><span class="lt">${swatch}${label}</span><b>${n}</b></span>`;
+  // Each level sits under its own stretch of the bar, with its seat count underneath. The stretches
+  // are in band order: Democratic holdovers, the nine ratings, Republican holdovers. Called and
+  // Flipped have no stretch, so they get a line of their own on election night.
+  const lg = (swatch, label, n, c) => `<span class="lg" ${c == null ? '' : `data-c="${c}"`}><i class="ln"></i><span class="lt">${swatch}${label}</span><b>${n}</b></span>`;
+  const nBand = M.band.length, counts = RATINGS.map((_, k) => M.seats.filter(x => x.rank === k).length);
+  let cum = 0, parts = [];
+  const seg = (swatch, label, n, width) => { parts.push(lg(swatch, label, n, (cum + width / 2) / nBand)); cum += width; };
+  if (M.hold.D) seg('<i class="hD"></i>', 'Not up', M.hold.D, M.hold.D);
+  RATINGS.forEach((r, k) => seg(`<i class="r${k}"></i>`, r, counts[k], counts[k]));
+  if (M.hold.R) seg('<i class="hR"></i>', 'Not up', M.hold.R, M.hold.R);
+  $('#legend').innerHTML = parts.join('');
   let nCalled = 0, nFlipped = 0;
-  if (LIVE) for (const s of M.seats) {
-    const r = result(ch, s.key);
-    if (r.st === 'called') { nCalled++; const lean = leanOf(s.rank); if (lean && lean !== r.party) nFlipped++; }
+  if (LIVE) for (const x of M.seats) {
+    const r = result(ch, x.key);
+    if (r.st === 'called') { nCalled++; const lean = leanOf(x.rank); if (lean && lean !== r.party) nFlipped++; }
   }
-  $('#legend').innerHTML = RATINGS.map((r, i) => lg(`<i class="r${i}"></i>`, r, M.seats.filter(s => s.rank === i).length)).join('') +
-    (M.hold.D + M.hold.R ? lg(`<i class="hD"></i><i class="hR" style="margin-left:-4px"></i>`, 'Not up', `${M.hold.D} D · ${M.hold.R} R`) : '') +
-    (LIVE ? lg(`<i class="st-called cD"></i><i class="st-called cR" style="margin-left:-4px"></i>`, 'Called', nCalled) +
-            lg(`<i style="background:#fff;height:3px;margin-top:-6px"></i>`, 'Flipped against the forecast', nFlipped) : '');
+  $('#legend2').innerHTML = LIVE
+    ? lg('<i class="st-called cD"></i><i class="st-called cR" style="margin-left:-4px"></i>', 'Called', nCalled) +
+      lg('<i style="background:#fff;height:3px;margin-top:-6px"></i>', 'Flipped against the forecast', nFlipped)
+    : '';
+  layoutLegend();
 
   renderCalled(ch, M);
   renderTiles(ch, M);
@@ -475,6 +492,28 @@ function updateSocialMeta() {
   setMeta('agwas:title', s ? `${seatName(S.ch, s)} — ${s.f.rating} · US Midterms 2026` : `${c.title} — US Midterms 2026`);
   setMeta('agwas:tags', `midterms uspolitics dataviz ${S.ch === 'gov' ? 'governors' : S.ch}`);
 }
+
+// Put each legend item under the middle of its stretch of the bar. Items are in left-to-right order;
+// one that would touch the previous item in its row drops to the next row. On a phone the legend
+// stays a plain wrapped list.
+function layoutLegend() {
+  const el = $('#legend'), narrow = matchMedia('(max-width:700px)').matches;
+  el.classList.toggle('al', !narrow);
+  if (narrow) { el.style.height = ''; return; }
+  const W = el.clientWidth, ROW = 46, TOP = 10, ends = [];
+  let rows = 1;
+  for (const it of el.querySelectorAll('.lg')) {
+    const w = it.offsetWidth, c = +it.dataset.c * W, left = Math.min(Math.max(c - w / 2, 0), W - w);
+    let r = 0;
+    while ((ends[r] ?? -1e9) + 10 > left) r++;
+    ends[r] = left + w; rows = Math.max(rows, r + 1);
+    it.style.left = left + 'px'; it.style.top = (TOP + r * ROW) + 'px';
+    const ln = it.querySelector('.ln');
+    ln.style.left = (c - left) + 'px'; ln.style.top = -(TOP + r * ROW) + 'px'; ln.style.height = (TOP + r * ROW) + 'px';
+  }
+  el.style.height = (TOP + rows * ROW) + 'px';
+}
+window.addEventListener('resize', layoutLegend);
 
 function seatCls(ch, s, inBand) {
   const r = result(ch, s.key), cl = inBand ? ['b'] : [];
