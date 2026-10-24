@@ -86,11 +86,13 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .oddsnote{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:6px;gap:12px}
 #called{margin-top:14px;font-size:13px;color:var(--dim);min-height:20px}
 #called b{color:var(--ink)}
+#called:empty{display:none}   /* no line reserved for the election-night counter until it has something to say */
+#bandh2{margin-top:18px}
 .dotD,.dotR,.dotO{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:baseline}
 .dotD{background:var(--calD)} .dotR{background:var(--calR)} .dotO{background:var(--calO)}
 
 /* ---- the band ---- */
-#bandwrap{position:relative;padding-top:30px}
+#bandwrap{position:relative;padding-top:24px}
 #band{display:flex;height:64px}
 #band.sparse{gap:var(--gap)}
 #band .b{flex:1 1 0;min-width:0;position:relative;cursor:pointer;background:var(--c)}
@@ -99,7 +101,7 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 #maj{visibility:hidden;position:absolute;top:0;bottom:-8px;width:0;border-left:2px solid var(--ink);pointer-events:none}
 #maj span{position:absolute;top:0;left:6px;transform:translateY(-2px);white-space:nowrap;font-size:11px;font-weight:700;letter-spacing:.04em}
 #maj.flip span{left:auto;right:6px}
-.bandend{position:relative;display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:8px;color:var(--dim)}
+.bandend{position:relative;display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:7px;color:var(--dim)}
 .bandend b{color:var(--ink);font-size:20px;font-weight:700;margin:0 4px}
 .bandend .tu{position:absolute;top:0;transform:translateX(-50%);display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
 .bandend .tu i{display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--c)}
