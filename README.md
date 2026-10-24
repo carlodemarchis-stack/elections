@@ -21,6 +21,9 @@ python3 -m http.server 8830     # from this folder; file:// won't work (snapshot
 - **The band**: one bar per seat, sorted Safe D to Safe R, majority tick (218 / 51 / 26).
   Senate and governors include the seats not up this year as dimmed holdovers.
 - **State tiles**: House = one square per district; Senate / governors = one square per state.
+- **Equal blocks** (House only, switch beside the map; `?view=blocks` opens it): one identical block per
+  district, one row per state, biggest state first, blocks safest D to safest R within a state. Rows wrap
+  at the width so blocks stay ~18 px and nothing scrolls sideways. The choice is kept in localStorage.
 - Detail panel, hover tooltip, and a full table (the non-colour view).
 - `help/` is the guide page (linked from the top bar): today's numbers pulled live, plus a walkthrough of what
   changes when votes are counted. If the results-mode behaviour in `index.html` changes, update it too.

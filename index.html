@@ -119,14 +119,26 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .st-called.cR{--c:var(--calR);background-image:none}
 .st-called.cO{--c:var(--calO);background-image:none}
 .upset::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:#fff}
-.tile .upset::after{height:auto;bottom:auto;top:50%;left:50%;right:auto;width:35%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%)}
+.tile .upset::after,.brow .upset::after{height:auto;bottom:auto;top:50%;left:50%;right:auto;width:35%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%)}
 .sel{outline:2px solid #fff;outline-offset:1px;z-index:3}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.live .st-cnt{animation:none}}
 
 /* ---- columns: map + detail ---- */
 .cols{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:28px;align-items:start}
+[hidden]{display:none!important}
+.h2row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:30px}
+.h2row h2{margin:0 0 10px}
+.h2row .seg{margin-bottom:6px}
+.pill.sm{padding:4px 11px;font-size:11px}
 #tilescroll{overflow-x:auto;padding-bottom:4px}
+/* equal blocks: one identical square per seat, one row per state, biggest state first */
+#blocks{display:grid;row-gap:7px}
+.brow{display:grid;grid-template-columns:54px minmax(0,1fr);align-items:start}
+.bsq{display:grid;grid-template-columns:repeat(var(--cols,20),minmax(0,1fr));gap:2px}
+.brow .bl{display:flex;justify-content:space-between;align-items:baseline;padding:2px 6px 0 0;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--dim)}
+.brow .bl em{font-style:normal;font-size:12px;color:var(--ink);letter-spacing:0}
+.brow i{display:block;position:relative;aspect-ratio:1;cursor:pointer;background:var(--c);border-radius:2px}
 #tiles{display:grid;grid-template-columns:repeat(11,minmax(48px,1fr));grid-auto-rows:minmax(48px,auto);gap:4px;min-width:560px}
 .tile{position:relative;aspect-ratio:1;background:var(--pan);border-radius:5px;padding:3px;display:flex;flex-direction:column;min-width:0}
 .tile .ab{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--dim);line-height:1;margin:1px 2px 4px 2px;display:flex;justify-content:space-between;align-items:baseline}
@@ -215,8 +227,8 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
 
   <div class="cols">
     <div>
-      <h2 id="mapH2">By state</h2>
-      <div id="tilescroll"><div id="tiles"></div></div>
+      <div class="h2row"><h2 id="mapH2">By state</h2><div class="seg" id="viewseg"></div></div>
+      <div id="tilescroll"><div id="tiles"></div><div id="blocks" hidden></div></div>
     </div>
     <div>
       <h2>Race</h2>
@@ -272,7 +284,7 @@ const CACHE = Q.get('cache') === 'off' ? null : 'https://atgelibbknccvxtuolay.su
 const DEMO = Q.has('demo') ? Math.min(1, Math.max(0, parseFloat(Q.get('demo')) || 0.55)) : null;
 let LIVE = DEMO !== null || Date.now() >= LIVE_FROM;   // flips by itself when election day arrives, see boot
 
-const S = {ch:'house', key:null, fc:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}};
+const S = {ch:'house', view:'map', key:null, fc:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}};
 
 /* -------------------------------------------------------------------- data */
 async function getJSON(url, fallback) {
@@ -372,6 +384,11 @@ function setHash() {
   history.replaceState(null, '', location.pathname + location.search + '#' + S.ch + (S.key ? '/' + S.key : ''));
   try { localStorage.setItem('midterms.ch', S.ch); } catch (e) {}
 }
+function readView() {
+  let v = new URLSearchParams(location.search).get('view');
+  try { v = v || localStorage.getItem('midterms.view'); } catch (e) {}
+  if (v === 'blocks' || v === 'map') S.view = v;
+}
 function readHash() {
   const [c, k] = location.hash.slice(1).split('/');
   if (CH[c]) { S.ch = c; S.key = k || null; return; }
@@ -428,6 +445,7 @@ function render() {
 
   renderCalled(ch, M);
   renderTiles(ch, M);
+  renderBlocks(ch, M);
   renderDetail();
   renderTable(ch, M);
   $('#tablesum').textContent = `All ${M.seats.length} races as a table`;
@@ -476,6 +494,34 @@ function renderCalled(ch, M) {
     : D >= need ? ` · <b>Democrats have reached ${need}</b>` : R >= rNeed ? ` · <b>Republicans have reached ${rNeed}${ch === 'senate' ? ' (the Vice President breaks ties)' : ''}</b>` : '';
   el.innerHTML = `${DEMO !== null ? '<b>Demo night</b> (invented results over the real forecast) · ' : ''}Called so far: <span class="dotD"></span><b>${D}</b> D · <span class="dotR"></span><b>${R}</b> R${co ? ` · <span class="dotO"></span><b>${co}</b> other` : ''} · ${cnt} counting · ${pend} yet to report${lead}`;
 }
+
+function renderBlocks(ch, M) {
+  const blocks = ch === 'house' && S.view === 'blocks';
+  $('#viewseg').innerHTML = ch !== 'house' ? '' : [['map', 'Map'], ['blocks', 'Equal blocks']].map(([v, l]) =>
+    `<button class="pill sm ${S.view === v ? 'on' : ''}" data-view="${v}" aria-pressed="${S.view === v}">${l}</button>`).join('');
+  $('#tiles').hidden = blocks; $('#blocks').hidden = !blocks;
+  if (!blocks) return;
+  const by = {};
+  for (const s of M.seats) (by[s.code.split('-')[0]] ||= []).push(s);
+  // biggest state first, ties alphabetical; within a state safest Democratic to safest Republican
+  const states = Object.entries(by).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  const el = $('#blocks');
+  el.dataset.max = states[0][1].length;
+  $('#mapH2').textContent = 'By state, biggest first · one block per district, safest Democratic to safest Republican';
+  el.innerHTML = states.map(([ab, ss]) => {
+    ss.sort((a, b) => a.rank - b.rank || b.f.democrat_pct - a.f.democrat_pct || a.code.localeCompare(b.code));
+    return `<div class="brow"><span class="bl">${ab}<em>${ss.length}</em></span><div class="bsq">${ss.map(s => `<i class="${seatCls(ch, s, false)}" data-key="${s.key}"></i>`).join('')}</div></div>`;
+  }).join('');
+  fitBlocks();
+}
+// Every block is the same size; a long state (California, Texas) runs onto a second line rather
+// than shrinking the blocks or forcing a sideways scroll. About 18 px a block, whatever the width.
+function fitBlocks() {
+  const el = $('#blocks'); if (el.hidden) return;
+  const W = $('#tilescroll').clientWidth, max = +el.dataset.max || 1;
+  el.style.setProperty('--cols', Math.max(8, Math.min(max, Math.floor((W - 54) / 18))));
+}
+if (window.ResizeObserver) new ResizeObserver(fitBlocks).observe($('#tilescroll'));
 
 function renderTiles(ch, M) {
   const byState = {};
@@ -551,6 +597,8 @@ function select(key) {
   if (key && matchMedia('(max-width:900px)').matches) $('#detail').scrollIntoView({block:'nearest', behavior:'smooth'});
 }
 document.addEventListener('click', e => {
+  const v = e.target.closest('[data-view]');
+  if (v) { S.view = v.dataset.view; try { localStorage.setItem('midterms.view', S.view); } catch (err) {} render(); return; }
   const p = e.target.closest('[data-ch]');
   if (p) { S.ch = p.dataset.ch; S.key = null; setHash(); render(); return; }
   const k = e.target.closest('[data-key]');
@@ -571,7 +619,7 @@ function tipHTML(el) {
   return h;
 }
 document.addEventListener('mousemove', e => {
-  const el = e.target.closest('#band .b, .tile .sqs i, tr[data-key]');
+  const el = e.target.closest('#band .b, .tile .sqs i, .brow i, tr[data-key]');
   if (!el || el.tagName === 'TR') { tip.style.display = 'none'; return; }
   tip.innerHTML = tipHTML(el); tip.style.display = 'block';
   const w = tip.offsetWidth, h = tip.offsetHeight;
@@ -582,6 +630,7 @@ document.addEventListener('mouseleave', () => tip.style.display = 'none');
 
 /* -------------------------------------------------------------------- boot */
 (async () => {
+  readView();
   readHash();
   try {
     await pullForecasts();
