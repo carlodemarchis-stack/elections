@@ -2,7 +2,7 @@
 
 Every House seat, Senate race and governorship on the 3 November 2026 ballot, from safest
 Democratic to safest Republican, filling in live as civicAPI calls them. Static page, no build:
-`index.html` + `data/` snapshots. **Built, not deployed, not committed.**
+`index.html` + `data/` snapshots. **Live at https://elections.aguywithascarf.com/** (repo `carlodemarchis-stack/elections`, GitHub Pages from `main`, deployed 2026-10-24).
 
 ## Run it
 
@@ -48,21 +48,19 @@ Forecast keys are upper-case (`CA-22`), results keys lower-case; they match 1:1 
 - Pre-election, `region_results` candidate lists include primary losers with 0 votes; the panel
   only lists candidates once votes exist, and shows the forecast matchup before that.
 
-## Deploy checklist (prepared 2026-10-24, nothing pushed)
+## Deployed (2026-10-24)
 
-Done in the folder: OG/Twitter/canonical + `agwas:*` capture tags (`img/og.png`, a real 1200x630
-screenshot of the House view; bump `?v=` when it changes), the Umami block with the `?noumami`
-opt-out (site "Midterms 2026", id in `umami-tools/website_ids.json`, created on the Umami server),
-the `ver.js` badge + "Release notes" line, `CNAME` (`elections.aguywithascarf.com`), `.nojekyll`.
-Done on the hub (`dataviz/`, uncommitted): `releases.json` v1.0.0, a quick link and a workshop card.
+Repo `carlodemarchis-stack/elections`, Pages from `main`, custom domain via the `CNAME` file,
+HTTPS enforced. The hub (`dataviz/`) carries the v1.0.0 release entry, a quick link and a
+workshop card; the version badge on the page fills from it. OG tags + `img/og.png` (a real
+1200x630 screenshot of the House view; bump `?v=` when it changes), Umami block with the
+`?noumami` opt-out (site "Midterms 2026", id in `umami-tools/website_ids.json`).
 
-Still to do, in this order:
+Still to do:
 
-1. Create the GitHub repo, push this folder, enable Pages with the custom domain, add the
-   `midterms` DNS record (same as the sibling apps).
-2. **Then** push the hub, so the card and the version badge never point at a dead host.
-3. Cache proxy for the three `race/` calls (Cloudflare Worker / edge function polling every
+1. Cache proxy for the three `race/` calls (Cloudflare Worker / edge function polling every
    30-60 s); change `API` in `index.html`. Free APIs get hammered on election night.
-4. Check the real feed once on a day that has results, not only `?demo`.
-5. Optional layers: FEC money-vs-votes, Polymarket/Kalshi odds line. Re-capture `og.png` on the
+2. Check the real feed once on a day that has results, not only `?demo`.
+3. Run the URL through LinkedIn Post Inspector to force the preview scrape.
+4. Optional layers: FEC money-vs-votes, Polymarket/Kalshi odds line. Re-capture `og.png` on the
    night if the page looks better filled in.
