@@ -99,15 +99,22 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 #maj{visibility:hidden;position:absolute;top:0;bottom:-8px;width:0;border-left:2px solid var(--ink);pointer-events:none}
 #maj span{position:absolute;top:0;left:6px;transform:translateY(-2px);white-space:nowrap;font-size:11px;font-weight:700;letter-spacing:.04em}
 #maj.flip span{left:auto;right:6px}
-.bandend{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:8px;color:var(--dim)}
+.bandend{position:relative;display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:8px;color:var(--dim)}
 .bandend b{color:var(--ink);font-size:20px;font-weight:700;margin:0 4px}
-.bandend .mid{text-align:center}
+.bandend .tu{position:absolute;top:0;transform:translateX(-50%);display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
+.bandend .tu i{display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--c)}
+.bandend .tu b{margin:0 0 0 2px}
+@media (max-width:700px){
+  /* no room to float over the bar between the two totals: Tossup takes a line of its own */
+  .bandend{flex-wrap:wrap;gap:2px 12px}
+  .bandend .tu{position:static;transform:none;order:3;flex-basis:100%}
+}
 
 .legend{display:flex;flex-wrap:wrap;gap:10px 22px;font-size:11px;color:var(--dim);margin-top:14px}
 .legend .lg{display:flex;flex-direction:column;gap:3px}
-.legend .lt{display:inline-flex;align-items:center;gap:6px}
-.legend .lg b{padding-left:18px;font-size:18px;line-height:1.1;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
-.legend i{width:12px;height:12px;border-radius:2px;display:inline-block;background:var(--c)}
+.legend .lt{display:inline-flex;align-items:center;gap:5px}
+.legend .lg b{padding-left:15px;font-size:18px;line-height:1.1;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block;background:var(--c)}
 .legend .ln{display:none}
 /* wide screens: each level sits under its own stretch of the bar, neighbours staggered onto a
    second row, a hairline joining each label to its stretch (positions are set in layoutLegend) */
@@ -446,7 +453,7 @@ function render() {
         R = M.hold.R + M.seats.filter(s => s.rank > 4).length;
   const ft = fc.totals || {};
   if (ft.democrat != null && (ft.democrat !== D || ft.republican !== R || ft.tossup !== T)) console.warn('band totals differ from forecast totals', {D, T, R}, ft);
-  $('#bandend').innerHTML = `<span>Democratic<b>${D}</b>seats</span><span class="mid">Tossup<b>${T}</b></span><span style="text-align:right">Republican<b>${R}</b>seats</span>`;
+  $('#bandend').innerHTML = `<span>Democratic<b>${D}</b>seats</span><span style="text-align:right">Republican<b>${R}</b>seats</span>`;
   $('#bandh2').textContent = `Every seat, safest Democratic to safest Republican${M.hold.D + M.hold.R ? ' · dimmed seats are not up this year' : ''}`;
 
   // Each level sits under its own stretch of the bar, with its seat count underneath. The stretches
@@ -455,11 +462,20 @@ function render() {
   const lg = (swatch, label, n, c) => `<span class="lg" ${c == null ? '' : `data-c="${c}"`}><i class="ln"></i><span class="lt">${swatch}${label}</span><b>${n}</b></span>`;
   const nBand = M.band.length, counts = RATINGS.map((_, k) => M.seats.filter(x => x.rank === k).length);
   let cum = 0, parts = [];
-  const seg = (swatch, label, n, width) => { parts.push(lg(swatch, label, n, (cum + width / 2) / nBand)); cum += width; };
+  // Tossup is the one level that lives above the bar, centred over its own stretch, so the key
+  // below has room for the rest on a single line
+  let tossup = '';
+  const seg = (swatch, label, n, width, above) => {
+    const c = (cum + width / 2) / nBand;
+    if (above) tossup = `<span class="tu" style="left:${(c * 100).toFixed(2)}%">${swatch}${label}<b>${n}</b></span>`;
+    else parts.push(lg(swatch, label, n, c));
+    cum += width;
+  };
   if (M.hold.D) seg('<i class="hD"></i>', 'Not up', M.hold.D, M.hold.D);
-  RATINGS.forEach((r, k) => seg(`<i class="r${k}"></i>`, r, counts[k], counts[k]));
+  RATINGS.forEach((r, k) => seg(`<i class="r${k}"></i>`, r, counts[k], counts[k], k === 4));
   if (M.hold.R) seg('<i class="hR"></i>', 'Not up', M.hold.R, M.hold.R);
   $('#legend').innerHTML = parts.join('');
+  $('#bandend').insertAdjacentHTML('beforeend', tossup);
   let nCalled = 0, nFlipped = 0;
   if (LIVE) for (const x of M.seats) {
     const r = result(ch, x.key);
@@ -493,25 +509,57 @@ function updateSocialMeta() {
   setMeta('agwas:tags', `midterms uspolitics dataviz ${S.ch === 'gov' ? 'governors' : S.ch}`);
 }
 
-// Put each legend item under the middle of its stretch of the bar. Items are in left-to-right order;
-// one that would touch the previous item in its row drops to the next row. On a phone the legend
-// stays a plain wrapped list.
+// Put each legend item under the middle of its stretch of the bar. Neighbours that would touch are
+// nudged apart as a group (centred on where they belong, a hairline still marks the true spot); an
+// item that would have to move more than MAXD px drops to the next row instead. On a phone the
+// legend stays a plain wrapped list.
 function layoutLegend() {
   const el = $('#legend'), narrow = matchMedia('(max-width:700px)').matches;
   el.classList.toggle('al', !narrow);
   if (narrow) { el.style.height = ''; return; }
-  const W = el.clientWidth, ROW = 46, TOP = 10, ends = [];
-  let rows = 1;
-  for (const it of el.querySelectorAll('.lg')) {
-    const w = it.offsetWidth, c = +it.dataset.c * W, left = Math.min(Math.max(c - w / 2, 0), W - w);
+  const W = el.clientWidth, ROW = 46, TOP = 10, GAP = 6, MAXD = 14;
+  const its = [...el.querySelectorAll('.lg')].map(e => {
+    const w = e.offsetWidth, c = +e.dataset.c * W;
+    return {e, w, c, d: c - w / 2};
+  });
+  // lefts for one row of items (in x order), or null if any would move further than MAXD
+  const place = list => {
+    const width = c => c.idx.reduce((a, j) => a + list[j].w, 0) + GAP * (c.idx.length - 1);
+    const left = c => {
+      let off = 0, sum = 0;
+      for (const j of c.idx) { sum += list[j].d - off; off += list[j].w + GAP; }
+      return Math.min(Math.max(sum / c.idx.length, 0), W - width(c));
+    };
+    const cl = [];
+    for (let k = 0; k < list.length; k++) {
+      cl.push({idx: [k]});
+      while (cl.length > 1) {
+        const a = cl[cl.length - 2], b = cl[cl.length - 1];
+        if (left(a) + width(a) + GAP > left(b)) cl.splice(-2, 2, {idx: [...a.idx, ...b.idx]}); else break;
+      }
+    }
+    const out = [];
+    for (const c of cl) { let x = left(c); for (const j of c.idx) { out[j] = x; x += list[j].w + GAP; } }
+    return out.every((x, k) => Math.abs(x - list[k].d) <= MAXD) ? out : null;
+  };
+  const rows = [];
+  for (const it of its) {
     let r = 0;
-    while ((ends[r] ?? -1e9) + 10 > left) r++;
-    ends[r] = left + w; rows = Math.max(rows, r + 1);
-    it.style.left = left + 'px'; it.style.top = (TOP + r * ROW) + 'px';
-    const ln = it.querySelector('.ln');
-    ln.style.left = (c - left) + 'px'; ln.style.top = -(TOP + r * ROW) + 'px'; ln.style.height = (TOP + r * ROW) + 'px';
+    while (true) {
+      rows[r] ||= [];
+      if (place([...rows[r], it])) { rows[r].push(it); break; }
+      r++;
+    }
   }
-  el.style.height = (TOP + rows * ROW) + 'px';
+  rows.forEach((list, r) => {
+    const lefts = place(list);
+    list.forEach((it, k) => {
+      it.e.style.left = lefts[k] + 'px'; it.e.style.top = (TOP + r * ROW) + 'px';
+      const ln = it.e.querySelector('.ln');
+      ln.style.left = (it.c - lefts[k]) + 'px'; ln.style.top = -(TOP + r * ROW) + 'px'; ln.style.height = (TOP + r * ROW) + 'px';
+    });
+  });
+  el.style.height = (TOP + Math.max(rows.length, 1) * ROW) + 'px';
 }
 window.addEventListener('resize', layoutLegend);
 
