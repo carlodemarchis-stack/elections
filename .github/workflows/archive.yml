@@ -1,0 +1,40 @@
+# Saves civicAPI's forecast and results as dated snapshots in archive/, only when something
+# changed, so the scorecard can later set the last prediction against the final results.
+#   - every hour, all year round
+#   - every 15 minutes through election week (3-9 November)
+# GitHub may delay scheduled runs by several minutes; the snapshots are stamped with the time
+# we actually looked, so a late run is never mistaken for an early one.
+name: Archive forecast and results
+
+on:
+  schedule:
+    - cron: '23 * * * *'
+    - cron: '*/15 * 3-9 11 *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: archive
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch and compare
+        run: python3 tools/archive.py
+      - name: Commit if anything is new
+        run: |
+          git config user.name "elections-archive[bot]"
+          git config user.email "actions@users.noreply.github.com"
+          git add archive
+          if git diff --cached --quiet; then echo "nothing new"; exit 0; fi
+          git commit -m "archive: $(date -u +%Y-%m-%dT%H:%MZ)"
+          git pull --rebase -q
+          git push

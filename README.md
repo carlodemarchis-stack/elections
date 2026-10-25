@@ -60,6 +60,27 @@ civicAPI  <--  elections-cache (Supabase edge function)  <--  every browser
 - Redeploy the function with the Supabase MCP `deploy_edge_function` (`verify_jwt: false`) using
   `supabase/functions/elections-cache/index.ts` as the file.
 
+## Saving the prediction, scoring it later
+
+`.github/workflows/archive.yml` runs `tools/archive.py` every hour (every 15 minutes 3-9 Nov) and commits
+to `archive/` only when something changed:
+
+- `archive/forecast/<stamp>.json` + `index.json`: the whole forecast (every seat, odds, Monte Carlo
+  range), stamped with when WE looked, civicAPI's own date beside it, and a content hash so a quiet
+  hour saves nothing. The index also carries each snapshot's chance of control, which is the
+  "how the prediction moved" table.
+- `archive/results/<stamp>.json` + `latest.json` + `index.json`: per seat, the called party, reporting %
+  and the D and R votes, plus the holdover seats.
+- **The prediction** = the last forecast saved at or before `LOCK` (3 Nov 10:00 UTC, the same moment the
+  page flips to results mode; constant in `scorecard/index.html`). Everything earlier stays in git, so any other
+  cut-off can be recomputed.
+- `scorecard/` compares it with the results live (through the cache, falling back to the archive's
+  `latest.json`): races called the way the forecast favoured, Brier score, calibration by rating, seat
+  total against the 90% range, who reached control, the biggest surprises. `?demo=1` scores invented
+  outcomes drawn from the forecast's own chances, which is also a check that the maths is calibrated.
+- Run it by hand: `python3 tools/archive.py` (or `forecast` / `results`). It needs no key.
+- The percentages are read as chances of winning (unconfirmed with civicAPI).
+
 ## civicAPI, as found (docs page is JS-rendered; routes were read from its bundle)
 
 Base `https://civicapi.org/api/v2`, keyless, CORS `*`. Attribution link required (it is in the top bar).

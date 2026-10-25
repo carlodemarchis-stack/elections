@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>US Midterms 2026 — Scorecard: forecast vs result</title>
+<meta name="theme-color" content="#090b12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23090b12'/%3E%3Crect x='4' y='10' width='12' height='12' fill='%233a82e8'/%3E%3Crect x='16' y='10' width='12' height='12' fill='%23f0584a'/%3E%3C/svg%3E">
+<meta name="description" content="How good was the forecast? The last saved prediction for the 2026 US midterms set against the results: races called the right way, how well the percentages held up, and the biggest surprises.">
+<link rel="canonical" href="https://elections.aguywithascarf.com/scorecard/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="A Guy With A Scarf">
+<meta property="og:title" content="US Midterms 2026 — Scorecard: forecast vs result">
+<meta property="og:description" content="The last saved prediction set against the results, race by race: what the forecast got right, how well its percentages held up, and the biggest surprises.">
+<meta property="og:url" content="https://elections.aguywithascarf.com/scorecard/">
+<meta property="og:image" content="https://elections.aguywithascarf.com/img/og.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="US Midterms 2026 — Scorecard: forecast vs result">
+<meta name="twitter:description" content="The last saved prediction set against the results, race by race.">
+<meta name="twitter:image" content="https://elections.aguywithascarf.com/img/og.png?v=1">
+<!-- Umami --><script>try{/[?&#]noumami\b/.test(location.href)&&localStorage.setItem('umami.disabled','1')}catch(e){}</script><script defer src="https://m.aguywithascarf.com/k.js" data-website-id="da7c4444-fe20-4f84-baaf-47d34355418b"></script>
+<script defer src="https://dataviz.aguywithascarf.com/ver.js"></script><!-- End Umami -->
+<style>
+:root{
+  --bg:#090b12; --ink:#e8ecf5; --dim:#8b96ad; --faint:#5d6679;
+  --pan:rgba(255,255,255,.05); --line:rgba(150,166,205,.15);
+  --r0:#2f88f5; --r1:#3d7bd6; --r2:#4670b8; --r3:#4f6a9a; --r4:#686a72;
+  --r5:#98605a; --r6:#b85c52; --r7:#d85a48; --r8:#f2564a;
+  --calD:#2f86ff; --calR:#ff4a3d; --calO:#e0b84a; --good:#43c07a; --bad:#e0554a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;line-height:1.55}
+a{color:var(--ink)}
+b,strong{font-weight:700}
+#top{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;background:rgba(9,11,18,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);font-size:12px;color:var(--dim)}
+#top b{color:var(--ink)}
+.pill{border:1px solid var(--line);color:var(--ink);border-radius:99px;padding:6px 14px;text-decoration:none;font-size:12px}
+.pill.on{background:var(--ink);color:#0a0d14;font-weight:700;border-color:var(--ink)}
+main{max-width:1100px;margin:0 auto;padding:30px clamp(16px,2.5vw,32px) 70px}
+h1{font-size:clamp(28px,5vw,44px);font-weight:700;letter-spacing:-.02em;line-height:1.08;margin-bottom:12px}
+.lede{font-size:17px;color:var(--dim);max-width:760px}
+h2{font-size:22px;font-weight:700;margin:44px 0 6px}
+h2 small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+h3{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:22px 0 8px}
+p{margin:8px 0}
+.dim{color:var(--dim)}
+.card{background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+.status{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.status .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.status .v{font-size:15px;margin-top:2px}
+.prog{height:6px;background:var(--pan);border-radius:3px;overflow:hidden;margin:6px 0 2px}
+.prog i{display:block;height:100%;background:var(--ink)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:12px 0}
+.tile{background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.tile .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.tile .big{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:4px 0;font-variant-numeric:tabular-nums}
+.tile .sub{font-size:13px;color:var(--dim)}
+.good{color:var(--good)} .bad{color:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tblwrap{overflow-x:auto}
+.chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:700;background:var(--c);color:#fff;white-space:nowrap}
+.r0{--c:var(--r0)}.r1{--c:var(--r1)}.r2{--c:var(--r2)}.r3{--c:var(--r3)}.r4{--c:var(--r4)}.r5{--c:var(--r5)}.r6{--c:var(--r6)}.r7{--c:var(--r7)}.r8{--c:var(--r8)}
+.dp{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+.dp.D{background:var(--calD)}.dp.R{background:var(--calR)}.dp.O{background:var(--calO)}
+.banner{border-left:3px solid var(--line);padding:2px 0 2px 14px;color:var(--dim);margin:14px 0}
+.banner b{color:var(--ink)}
+.banner.warn{border-color:#e0b84a}
+.note{font-size:13px;color:var(--faint);max-width:760px}
+#foot{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--faint);line-height:1.7}
+#foot a{color:var(--dim)}
+</style>
+</head>
+<body>
+<div id="top">
+  <span><b>US Midterms 2026</b> · Scorecard</span>
+  <span><a class="pill" href="../help/">Guide</a> <a class="pill on" href="../">← Back to the page</a></span>
+</div>
+
+<main>
+  <h1>Forecast vs result</h1>
+  <p class="lede">Every hour the forecast is saved, and every few minutes in election week so are the results. When the votes are counted, this page sets the last prediction made before the polls against what actually happened.</p>
+
+  <div id="app"><p class="dim" style="margin-top:30px">Loading the saved forecast and the results…</p></div>
+
+  <div id="foot">
+    <p>How it is scored. The forecast gives each race a chance for each party; where an independent can win, they get a share too. A race counts as <b>called the right way</b> if the party with the highest chance won. The <b>Brier score</b> measures the percentages themselves: for each race it adds up the squared gap between the forecast chance and what happened (1 for the winner, 0 for the others), then averages. Zero is perfect, and a 50/50 guess between two parties scores 0.5. A good forecast is also <b>calibrated</b>: of the races it gave a 90% chance, about nine in ten should go that way.</p>
+    <p>The forecast is civicAPI's, saved by us; the calls come from civicAPI too. The chance a forecast gives each party is treated as a chance of winning, which fits its numbers but has not been confirmed with civicAPI. A call can change after a recount, and this page follows the latest results. <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a> · <a href="https://dataviz.aguywithascarf.com/">A guy with a scarf</a> · <a href="https://github.com/carlodemarchis-stack/elections/tree/main/archive" target="_blank" rel="noopener">every saved snapshot</a></p>
+    <p><a href="https://dataviz.aguywithascarf.com/releases/#midterms">Release notes</a> <a class="agwas-ver" data-agwas-ver="midterms" href="https://dataviz.aguywithascarf.com/releases/#midterms"></a></p>
+  </div>
+</main>
+
+<script>
+(() => {
+'use strict';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ARCHIVE = '../archive/';
+const CACHE = 'https://atgelibbknccvxtuolay.supabase.co/functions/v1/elections-cache';
+// the prediction is the last snapshot saved before polls open (the same moment the main page goes live)
+const LOCK = Date.UTC(2026, 10, 3, 10, 0);
+const CH = [
+  ['house',  'House of Representatives', 218, 'House'],
+  ['senate', 'Senate',                   51,  'Senate'],
+  ['gov',    'Governorships',            26,  'Governors'],
+];
+const RATINGS = ['Safe D','Likely D','Lean D','Tilt D','Tossup','Tilt R','Lean R','Likely R','Safe R'];
+const Q = new URLSearchParams(location.search);
+const DEMO = Q.has('demo') ? Math.min(1, Math.max(0, parseFloat(Q.get('demo')) || 0.6)) : null;
+
+const getJSON = async u => { const r = await fetch(u, {cache:'no-store'}); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); };
+const when = iso => new Date(iso).toLocaleString('en-GB', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', timeZone:'UTC'}) + ' UTC';
+const pct = (v, d = 0) => (v == null ? '–' : (+v).toFixed(d) + '%');
+const party = p => /democrat/i.test(p || '') ? 'D' : /republican/i.test(p || '') ? 'R' : 'O';
+
+/* the same compact shape tools/archive.py saves: seat -> [calledParty, reporting %, D votes, R votes, winner] */
+function compactRace(doc) {
+  const seats = {};
+  for (const [k, r] of Object.entries(doc.region_results || {})) {
+    const cs = r.candidates || [], win = cs.find(c => c.winner);
+    const top = p => cs.filter(c => party(c.party) === p).sort((a, b) => (b.votes || 0) - (a.votes || 0))[0];
+    seats[k] = [win ? party(win.party) : '', r.percent_reporting || 0, top('D')?.votes || 0, top('R')?.votes || 0, win?.name || ''];
+  }
+  const seatOf = n => (doc.candidates || []).find(c => c.name === n)?.seats || 0;
+  return {last_updated: doc.last_updated, hold: {D: seatOf('Democrats'), R: seatOf('Republicans')}, seats};
+}
+
+/* ?demo: invent outcomes from the forecast's own chances, so the scoring can be seen before there are votes */
+function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function demoResults(fc, base) {
+  const out = {chambers: {}};
+  for (const [k] of CH) {
+    const seats = {};
+    for (const [code, s] of Object.entries(fc.chambers[k].seats)) {
+      const r = rng(hash(code + k)), u = r(), called = r() < DEMO;
+      const [, dp, rp, ip, , dn, rn, iname] = s;
+      const a = u < dp / 100 ? 'D' : u < (dp + rp) / 100 ? 'R' : 'O';
+      seats[code.toLowerCase()] = called ? [a, 100, 0, 0, a === 'D' ? dn : a === 'R' ? rn : iname || 'Independent'] : ['', 0, 0, 0, ''];
+    }
+    out.chambers[k] = {last_updated: 'demo', hold: base.chambers[k].hold, seats};
+  }
+  return out;
+}
+
+/* ---- scoring */
+function score(fcCh, resCh) {
+  const rows = [];
+  for (const [code, s] of Object.entries(fcCh.seats)) {
+    const r = resCh.seats[code.toLowerCase()];
+    if (!r || !r[0]) continue;
+    const [rating, dp, rp, ip, , dn, rn, iname] = s;
+    const p = {D: (dp || 0) / 100, R: (rp || 0) / 100, O: (ip || 0) / 100};
+    const a = r[0], fav = ['D', 'R', 'O'].sort((x, y) => p[y] - p[x])[0];
+    rows.push({code, rating, p, a, fav, hit: a === fav, pa: p[a], dn, rn, iname, winner: r[4],
+      brier: ['D', 'R', 'O'].reduce((t, c) => t + Math.pow(p[c] - (a === c ? 1 : 0), 2), 0)});
+  }
+  const total = Object.keys(fcCh.seats).length, called = rows.length;
+  const calledD = Object.values(resCh.seats).filter(r => r[0] === 'D').length;
+  const calledR = Object.values(resCh.seats).filter(r => r[0] === 'R').length;
+  const byRating = RATINGS.map((name, i) => {
+    const rs = rows.filter(r => r.rating === name);
+    return {name, i, n: rs.length, predD: rs.length ? rs.reduce((t, r) => t + r.p.D, 0) / rs.length : null,
+      actualD: rs.length ? rs.filter(r => r.a === 'D').length / rs.length : null};
+  });
+  const misses = rows.filter(r => !r.hit).sort((x, y) => x.pa - y.pa);
+  return {rows, total, called, calledD, calledR, hold: resCh.hold, hits: rows.filter(r => r.hit).length,
+    brier: called ? rows.reduce((t, r) => t + r.brier, 0) / called : null, byRating, misses, final: called === total};
+}
+
+/* ---- rendering */
+const tile = (k, big, sub) => `<div class="tile"><div class="k">${k}</div><div class="big">${big}</div><div class="sub">${sub}</div></div>`;
+const seatLabel = (k, code) => k === 'house' ? code : code;
+
+function chamberHTML([k, title, need], fcCh, resCh) {
+  const sc = score(fcCh, resCh), mc = fcCh.monte_carlo || {};
+  const dNow = sc.hold.D + sc.calledD, rNow = sc.hold.R + sc.calledR, left = sc.total - sc.called;
+  const rNeed = k === 'senate' ? 50 : need;
+  const favD = (mc.prob_democrat_majority || 0) >= (mc.prob_republican_majority || 0);
+  let html = `<h2><small>${esc(CH.find(c => c[0] === k)[3])}</small>${esc(title)}</h2>`;
+  html += `<div class="prog" title="${sc.called} of ${sc.total} races called"><i style="width:${sc.total ? sc.called / sc.total * 100 : 0}%"></i></div>
+    <p class="dim" style="font-size:13px;margin-top:0">${sc.called} of ${sc.total} races called${sc.final ? ' · <b>final</b>' : ` · ${left} still to call`}</p>`;
+  if (!sc.called) return html + `<div class="banner">Nothing has been called yet, so there is nothing to score. The prediction on file: Democrats ${pct(mc.prob_democrat_majority, 1)} to control, Republicans ${pct(mc.prob_republican_majority, 1)}, with ${mc.expected_democrat_seats} Democratic seats expected (${mc.democrat_seats_p5}–${mc.democrat_seats_p95}).</div>`;
+
+  const inRange = dNow >= mc.democrat_seats_p5 && dNow <= mc.democrat_seats_p95;
+  const above = dNow > mc.democrat_seats_p95, below = dNow < mc.democrat_seats_p5;
+  const seatsSub = sc.final
+    ? `Forecast expected ${mc.expected_democrat_seats} (${mc.democrat_seats_p5}–${mc.democrat_seats_p95}) · <span class="${inRange ? 'good' : 'bad'}">${inRange ? 'inside the range' : above ? 'above the range' : 'below the range'}</span>`
+    : `Forecast expected ${mc.expected_democrat_seats} (${mc.democrat_seats_p5}–${mc.democrat_seats_p95}) · ${left} races still to call`;
+  const control = dNow >= need ? 'D' : rNow >= rNeed ? 'R' : null;
+  const controlSub = control
+    ? `${control === 'D' ? 'Democrats' : 'Republicans'} have reached ${control === 'D' ? need : rNeed} · forecast gave them ${pct(control === 'D' ? mc.prob_democrat_majority : mc.prob_republican_majority, 1)}`
+    : `Neither party has reached its line yet · forecast favoured ${favD ? 'Democrats' : 'Republicans'} (${pct(favD ? mc.prob_democrat_majority : mc.prob_republican_majority, 1)})`;
+  html += `<div class="tiles">
+    ${tile('Democratic seats', dNow, seatsSub)}
+    ${tile('Control', control ? (control === 'D' ? 'Democrats' : 'Republicans') : 'Open', controlSub)}
+    ${tile('Called the right way', `${sc.hits} <span style="font-size:18px;color:var(--dim)">of ${sc.called}</span>`, `${pct(sc.hits / sc.called * 100)} of called races went to the party the forecast favoured`)}
+    ${tile('Brier score', sc.brier.toFixed(3), '0 is perfect, 0.5 is a coin flip between two parties; lower is better')}
+  </div>`;
+
+  html += `<h3>Did the percentages hold up?</h3>
+    <div class="tblwrap"><table><thead><tr><th>Rating</th><th class="n">Races called</th><th class="n">Forecast chance of a Democratic win</th><th class="n">Democrats actually won</th></tr></thead><tbody>` +
+    sc.byRating.filter(r => r.n).map(r => `<tr><td><span class="chip r${r.i}">${r.name}</span></td><td class="n">${r.n}</td><td class="n">${pct(r.predD * 100)}</td><td class="n">${pct(r.actualD * 100)}</td></tr>`).join('') +
+    `</tbody></table></div>
+    <p class="note">Read each row as a promise: a row that says 90% should come out near 90%. Small rows are noisy, so wait until most races are called.</p>`;
+
+  if (sc.misses.length) {
+    html += `<h3>The biggest surprises</h3><div class="tblwrap"><table><thead><tr><th>Race</th><th>Rating</th><th>Forecast favoured</th><th>Winner</th><th class="n">Forecast chance of that</th></tr></thead><tbody>` +
+      sc.misses.slice(0, 8).map(r => {
+        const favName = r.fav === 'D' ? r.dn : r.fav === 'R' ? r.rn : r.iname;
+        const winName = r.winner || (r.a === 'D' ? r.dn : r.a === 'R' ? r.rn : r.iname);
+        return `<tr><td><a href="../#${k}/${r.code.toLowerCase()}">${esc(seatLabel(k, r.code))}</a></td><td><span class="chip r${RATINGS.indexOf(r.rating)}">${esc(r.rating)}</span></td>
+          <td><span class="dp ${r.fav}"></span>${esc(favName || r.fav)} <span class="dim">${pct(r.p[r.fav] * 100)}</span></td>
+          <td><span class="dp ${r.a}"></span>${esc(winName)}</td><td class="n">${pct(r.pa * 100, 1)}</td></tr>`;
+      }).join('') + `</tbody></table></div>`;
+  } else {
+    html += `<div class="banner"><b>No surprises so far:</b> every called race went to the party the forecast favoured.</div>`;
+  }
+  return html;
+}
+
+function movementHTML(idx, used) {
+  const rows = idx.snapshots.slice().reverse().map(s => `<tr><td>${when(s.observed)}${s.file === used.file ? ' <b>◀ prediction used</b>' : ''}</td><td>${esc(s.updated || '–')}</td>
+    <td class="n">${pct(s.odds.house[0], 1)}</td><td class="n">${pct(s.odds.senate[0], 1)}</td><td class="n">${pct(s.odds.gov[0], 1)}</td></tr>`).join('');
+  return `<h2><small>The forecast over time</small>How the prediction moved</h2>
+    <p class="dim">Each line is a saved copy of the forecast, kept only when something in it had changed. The columns are the chance of Democratic control.</p>
+    <div class="tblwrap"><table><thead><tr><th>Saved</th><th>civicAPI's date</th><th class="n">House</th><th class="n">Senate</th><th class="n">Governors</th></tr></thead><tbody>${rows}</tbody></table></div>` +
+    (idx.snapshots.length < 3 ? `<p class="note">Only ${idx.snapshots.length} so far. A new line appears whenever civicAPI publishes a change.</p>` : '');
+}
+
+(async () => {
+  const app = document.getElementById('app');
+  try {
+    const idx = await getJSON(ARCHIVE + 'forecast/index.json');
+    if (!idx.snapshots.length) throw new Error('no saved forecast yet');
+    const eligible = idx.snapshots.filter(s => Date.parse(s.observed) <= LOCK);
+    const used = eligible.length ? eligible[eligible.length - 1] : idx.snapshots[0];
+    const locked = Date.now() >= LOCK;
+    const fc = await getJSON(ARCHIVE + 'forecast/' + used.file);
+
+    let res, source;
+    const archived = await getJSON(ARCHIVE + 'results/latest.json').catch(() => null);
+    try {
+      const d = await getJSON(CACHE + '?k=results');
+      res = {chambers: {house: compactRace(d.house), senate: compactRace(d.senate), gov: compactRace(d.gov)}}; source = 'live from civicAPI';
+    } catch (e) {
+      if (!archived) throw new Error('results unavailable');
+      res = archived; source = `saved copy from ${when(archived.observed)}`;
+    }
+    if (DEMO !== null) { res = demoResults(fc, res); source = 'invented demo results'; }
+
+    const called = Object.fromEntries(CH.map(([k]) => [k, Object.values(res.chambers[k].seats).filter(r => r[0]).length]));
+    const totals = Object.fromEntries(CH.map(([k]) => [k, Object.keys(res.chambers[k].seats).length]));
+    const allCalled = CH.every(([k]) => called[k] === totals[k]);
+
+    let html = `<div class="card status">
+      <div><div class="k">Prediction used</div><div class="v">Saved ${when(used.observed)}</div><div class="dim" style="font-size:13px">civicAPI's forecast dated ${esc(used.updated)} · ${locked ? 'locked: the last one saved before polls opened' : 'the latest so far; it locks on 3 Nov, 10:00 UTC'}</div></div>
+      <div><div class="k">Results</div><div class="v">${DEMO !== null ? '<b>Demo</b> · ' : ''}${allCalled ? 'All races called' : CH.map(([k, , , s]) => `${s} ${called[k]}/${totals[k]}`).join(' · ')}</div><div class="dim" style="font-size:13px">${esc(source)}</div></div>
+    </div>`;
+    if (!eligible.length) html += `<div class="banner warn"><b>Heads up:</b> no forecast was saved before polls opened, so this uses the earliest one available.</div>`;
+    if (DEMO !== null) html += `<div class="banner warn"><b>Demo:</b> these results are invented from the forecast's own chances, to show how the scoring reads. They are not real.</div>`;
+    for (const c of CH) html += chamberHTML(c, fc.chambers[c[0]], res.chambers[c[0]]);
+    html += movementHTML(idx, used);
+    app.innerHTML = html;
+  } catch (e) {
+    console.error(e);
+    app.innerHTML = `<div class="banner warn"><b>Could not load the saved data.</b> ${esc(e.message)}. If you opened this file directly, serve the folder instead.</div>`;
+  }
+})();
+})();
+</script>
+</body>
+</html>
