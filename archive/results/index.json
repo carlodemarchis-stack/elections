@@ -1,1 +1,1 @@
-{"snapshots":[{"file":"2026-10-25T1700Z.json","observed":"2026-10-25T17:00:42Z","hash":"5fd982abacf2","called":{"house":0,"senate":0,"gov":0},"total":{"house":435,"senate":35,"gov":36}}]}
+{"snapshots":[{"file":"2026-10-25T1700Z.json","observed":"2026-10-25T17:00:42Z","hash":"5fd982abacf2","called":{"house":0,"senate":0,"gov":0},"total":{"house":435,"senate":35,"gov":36}},{"file":"2026-10-25T1943Z.json","observed":"2026-10-25T19:43:36Z","hash":"c9ff5438181b","called":{"house":53,"senate":2,"gov":1},"total":{"house":435,"senate":35,"gov":36}}]}
