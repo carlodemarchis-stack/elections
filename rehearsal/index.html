@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>US Midterms 2026 — Dress rehearsal</title>
+<meta name="theme-color" content="#090b12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23090b12'/%3E%3Crect x='4' y='10' width='12' height='12' fill='%233a82e8'/%3E%3Crect x='16' y='10' width='12' height='12' fill='%23f0584a'/%3E%3C/svg%3E">
+<meta name="description" content="civicAPI runs test elections before the real one. This page shows whether one is running and opens the live page and the scorecard on it, to see how they behave on election night.">
+<link rel="canonical" href="https://elections.aguywithascarf.com/rehearsal/">
+<!-- Umami --><script>try{/[?&#]noumami\b/.test(location.href)&&localStorage.setItem('umami.disabled','1')}catch(e){}</script><script defer src="https://m.aguywithascarf.com/k.js" data-website-id="da7c4444-fe20-4f84-baaf-47d34355418b"></script>
+<script defer src="https://dataviz.aguywithascarf.com/ver.js"></script><!-- End Umami -->
+<style>
+:root{--bg:#090b12;--ink:#e8ecf5;--dim:#8b96ad;--faint:#5d6679;--pan:rgba(255,255,255,.05);--line:rgba(150,166,205,.15);--good:#43c07a;--warn:#e0b84a}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;line-height:1.55}
+a{color:var(--ink)}
+b,strong{font-weight:700}
+#top{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;background:rgba(9,11,18,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);font-size:12px;color:var(--dim)}
+#top b{color:var(--ink)}
+.pill{display:inline-block;border:1px solid var(--line);color:var(--ink);border-radius:99px;padding:7px 15px;text-decoration:none;font-size:13px;margin:0 6px 8px 0}
+.pill:hover{border-color:rgba(150,166,205,.4)}
+.pill.on{background:var(--ink);color:#0a0d14;font-weight:700;border-color:var(--ink)}
+main{max-width:860px;margin:0 auto;padding:30px clamp(16px,2.5vw,32px) 70px}
+h1{font-size:clamp(28px,5vw,42px);font-weight:700;letter-spacing:-.02em;line-height:1.08;margin-bottom:12px}
+.lede{font-size:17px;color:var(--dim)}
+h2{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:34px 0 10px}
+p{margin:8px 0}
+.dim{color:var(--dim)}
+.card{background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:12px 0}
+.flag{display:inline-block;padding:2px 11px;border-radius:99px;font-size:12px;font-weight:700;letter-spacing:.04em}
+.flag.on{background:var(--warn);color:#1a1405}.flag.off{background:var(--good);color:#04180b}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:12px}
+.tile{background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.tile .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.tile .big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+.bar{height:6px;background:var(--pan);border-radius:3px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:7px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+td.n,th.n{text-align:right}
+.tblwrap{overflow-x:auto}
+ul{margin:8px 0 8px 20px}li{margin:6px 0}
+.note{font-size:13px;color:var(--faint)}
+code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:var(--pan);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div id="top"><span><b>US Midterms 2026</b> · Dress rehearsal</span><a class="pill on" href="../" style="margin:0">← Back to the page</a></div>
+<main>
+  <h1>Dress rehearsal</h1>
+  <p class="lede">Before the real election, civicAPI runs <strong>test elections</strong>: invented results, every race called within hours. This page shows whether one is running and opens the live page and the scorecard on it, so we can see how everything behaves on election night before it happens.</p>
+
+  <h2>Is a test election running?</h2>
+  <div class="card" id="live"><p class="dim">Checking civicAPI…</p></div>
+
+  <h2>Run the page on it</h2>
+  <p class="dim">These open the normal pages in <code>?rehearsal</code> mode: the test results are treated as if it were election night, and the top bar says so. Nothing here is real.</p>
+  <p>
+    <a class="pill" href="../?rehearsal#house">House</a><a class="pill" href="../?rehearsal#senate">Senate</a><a class="pill" href="../?rehearsal#gov">Governors</a><a class="pill" href="../scorecard/?rehearsal">Scorecard on the test results</a>
+  </p>
+  <p class="note">When no test election is running, these simply show the real, empty page with a note saying so.</p>
+
+  <h2>How the saved test elections counted</h2>
+  <p class="dim">Every change in civicAPI's test feed is saved apart from the real results. Each line is one saved copy: how many races were called when we looked. It shows how fast a real night can be expected to fill in.</p>
+  <div class="card"><div class="tblwrap"><table id="hist"><thead><tr><th>Saved</th><th class="n">House</th><th class="n">Senate</th><th class="n">Governors</th></tr></thead><tbody><tr><td colspan="4" class="dim">Loading…</td></tr></tbody></table></div></div>
+
+  <h2>What the rehearsal has taught us so far</h2>
+  <div class="card">
+    <ul>
+      <li><b>Seats are a running total.</b> civicAPI's national "seats" figure is the seats not up plus the races called so far, not a fixed number. We had treated it as fixed, which would have double-counted the Senate bar as soon as races were called. Fixed; the totals now match civicAPI's own (House 229–206, Senate 51–49, governors 25–25 at the end of the 27 October test).</li>
+      <li><b>Test data must never look real.</b> The feed flags it (<code>test_data</code>). Outside rehearsal mode the pages ignore it and say so, and the archive keeps it apart from the real results.</li>
+      <li><b>A forecast can be published broken.</b> The 27 October Senate forecast had seat totals of 135 in a 100-seat chamber and a 100% chance of control for both parties. The pages now fall back to the last sane forecast and say why.</li>
+    </ul>
+  </div>
+
+  <h2>Before the night</h2>
+  <div class="card">
+    <p><b>On the morning of 3 November</b>, check the flag at the top of this page. It must say the test election is <strong>off</strong>. If civicAPI leaves it on, the live page would treat the real results as test data and ignore them, so the first thing to do on the day is look here.</p>
+  </div>
+
+  <p class="note" style="margin-top:36px">Data: <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a> · <a href="https://dataviz.aguywithascarf.com/releases/#midterms">Release notes</a> <a class="agwas-ver" data-agwas-ver="midterms" href="https://dataviz.aguywithascarf.com/releases/#midterms"></a></p>
+</main>
+<script>
+(() => {
+'use strict';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const CACHE = 'https://atgelibbknccvxtuolay.supabase.co/functions/v1/elections-cache';
+const CH = [['house', 'House'], ['senate', 'Senate'], ['gov', 'Governors']];
+const getJSON = async u => { const r = await fetch(u, {cache: 'no-store'}); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); };
+const when = iso => new Date(iso).toLocaleString('en-GB', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC'}) + ' UTC';
+
+(async () => {
+  const el = document.getElementById('live');
+  try {
+    const d = await getJSON(CACHE + '?k=results');
+    const test = CH.some(([k]) => d[k]?.test_data);
+    const tiles = CH.map(([k, label]) => {
+      const rr = Object.values(d[k].region_results || {}), n = rr.length;
+      const called = rr.filter(r => (r.candidates || []).some(c => c.winner)).length;
+      const rep = n ? rr.reduce((t, r) => t + (r.percent_reporting || 0), 0) / n : 0;
+      return `<div class="tile"><div class="k">${label}</div><div class="big">${called} <span class="dim" style="font-size:15px;font-weight:300">of ${n} called</span></div>
+        <div class="bar"><i style="width:${n ? called / n * 100 : 0}%"></i></div>
+        <div class="dim" style="font-size:12px;margin-top:6px">${rep.toFixed(0)}% reporting on average · feed updated ${d[k].last_updated ? when(d[k].last_updated) : '–'}</div></div>`;
+    }).join('');
+    el.innerHTML = `<p><span class="flag ${test ? 'on' : 'off'}">${test ? 'TEST ELECTION ON' : 'TEST ELECTION OFF'}</span>
+      <span class="dim" style="margin-left:8px">${test ? "civicAPI's results are invented right now (test_data is true)." : 'civicAPI is not flagging its results as test data.'}</span></p><div class="grid">${tiles}</div>`;
+  } catch (e) {
+    el.innerHTML = `<p class="dim">Could not reach the results feed (${esc(e.message)}).</p>`;
+  }
+
+  const tb = document.querySelector('#hist tbody');
+  try {
+    const idx = await getJSON('../archive/rehearsal/index.json');
+    const rows = idx.snapshots.map(s => `<tr><td>${when(s.observed)}</td>${CH.map(([k]) => `<td class="n">${s.called[k]} / ${s.total[k]}</td>`).join('')}</tr>`).join('');
+    tb.innerHTML = rows || '<tr><td colspan="4" class="dim">None saved yet.</td></tr>';
+  } catch (e) {
+    tb.innerHTML = '<tr><td colspan="4" class="dim">None saved yet.</td></tr>';
+  }
+})();
+})();
+</script>
+</body>
+</html>

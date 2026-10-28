@@ -111,6 +111,17 @@ const CH = [
 const RATINGS = ['Safe D','Likely D','Lean D','Tilt D','Tossup','Tilt R','Lean R','Likely R','Safe R'];
 const Q = new URLSearchParams(location.search);
 const DEMO = Q.has('demo') ? Math.min(1, Math.max(0, parseFloat(Q.get('demo')) || 0.6)) : null;
+// ?rehearsal scores civicAPI's TEST election (invented results) as if it were the real one
+const REHEARSAL = Q.has('rehearsal');
+const SIZE = {house: 435, senate: 100, gov: 50};
+/* the same sanity checks as tools/archive.py: a forecast that cannot be right is never used */
+function forecastProblem(k, c) {
+  const t = c.totals || {}, m = c.monte_carlo || {};
+  const total = (t.democrat || 0) + (t.republican || 0) + (t.tossup || 0) + (t.independent || 0);
+  if (total !== SIZE[k]) return `its seat totals add up to ${total} in a chamber of ${SIZE[k]}`;
+  if ((m.prob_democrat_majority || 0) + (m.prob_republican_majority || 0) > 100.5) return 'its chances of control add up to more than 100%';
+  return null;
+}
 
 const getJSON = async u => { const r = await fetch(u, {cache:'no-store'}); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); };
 const when = iso => new Date(iso).toLocaleString('en-GB', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', timeZone:'UTC'}) + ' UTC';
@@ -125,8 +136,10 @@ function compactRace(doc) {
     const top = p => cs.filter(c => party(c.party) === p).sort((a, b) => (b.votes || 0) - (a.votes || 0))[0];
     seats[k] = [win ? party(win.party) : '', r.percent_reporting || 0, top('D')?.votes || 0, top('R')?.votes || 0, win?.name || ''];
   }
+  // civicAPI's national "seats" is a running total (holdovers + races called); take the called wins off
   const seatOf = n => (doc.candidates || []).find(c => c.name === n)?.seats || 0;
-  return {last_updated: doc.last_updated, hold: {D: seatOf('Democrats'), R: seatOf('Republicans')}, seats};
+  const won = p => Object.values(seats).filter(r => r[0] === p).length;
+  return {last_updated: doc.last_updated, hold: {D: Math.max(0, seatOf('Democrats') - won('D')), R: Math.max(0, seatOf('Republicans') - won('R'))}, seats};
 }
 
 /* ?demo: invent outcomes from the forecast's own chances, so the scoring can be seen before there are votes */
@@ -223,11 +236,30 @@ function chamberHTML([k, title, need], fcCh, resCh) {
   return html;
 }
 
-function movementHTML(idx, used) {
-  const rows = idx.snapshots.slice().reverse().map(s => `<tr><td>${when(s.observed)}${s.file === used.file ? ' <b>◀ prediction used</b>' : ''}</td><td>${esc(s.updated || '–')}</td>
-    <td class="n">${pct(s.odds.house[0], 1)}</td><td class="n">${pct(s.odds.senate[0], 1)}</td><td class="n">${pct(s.odds.gov[0], 1)}</td></tr>`).join('');
+/* the last forecast saved before polls opened that passes the checks, chamber by chamber */
+async function pickForecast(idx) {
+  const eligible = idx.snapshots.filter(s => Date.parse(s.observed) <= LOCK);
+  const pool = eligible.length ? eligible : [idx.snapshots[0]];
+  const chosen = {}, rejected = {}, files = {};
+  for (const sn of pool.slice().reverse()) {
+    files[sn.file] ??= await getJSON(ARCHIVE + 'forecast/' + sn.file);
+    for (const [k] of CH) {
+      if (chosen[k]) continue;
+      const c = files[sn.file].chambers[k], why = forecastProblem(k, c);
+      if (!why) chosen[k] = {snap: sn, ch: c}; else rejected[k] ??= {snap: sn, why};
+    }
+    if (CH.every(([k]) => chosen[k])) break;
+  }
+  for (const [k] of CH) if (!chosen[k]) { const sn = pool[pool.length - 1]; chosen[k] = {snap: sn, ch: files[sn.file].chambers[k], unchecked: true}; }
+  return {chosen, rejected, eligible: eligible.length > 0};
+}
+
+function movementHTML(idx, usedFiles) {
+  const cell = (s, k) => `<td class="n">${pct(s.odds[k][0], 1)}${s.problems?.[k] ? ` <span title="${esc('Rejected: ' + s.problems[k])}" style="color:#e0b84a">⚠</span>` : ''}</td>`;
+  const rows = idx.snapshots.slice().reverse().map(s => `<tr><td>${when(s.observed)}${usedFiles.has(s.file) ? ' <b>◀ prediction used</b>' : ''}</td><td>${esc(s.updated || '–')}</td>
+    ${cell(s, 'house')}${cell(s, 'senate')}${cell(s, 'gov')}</tr>`).join('');
   return `<h2><small>The forecast over time</small>How the prediction moved</h2>
-    <p class="dim">Each line is a saved copy of the forecast, kept only when something in it had changed. The columns are the chance of Democratic control.</p>
+    <p class="dim">Each line is a saved copy of the forecast, kept only when something in it had changed. The columns are the chance of Democratic control. A ⚠ marks a chamber whose forecast failed our sanity checks, so it is kept on record but never used.</p>
     <div class="tblwrap"><table><thead><tr><th>Saved</th><th>civicAPI's date</th><th class="n">House</th><th class="n">Senate</th><th class="n">Governors</th></tr></thead><tbody>${rows}</tbody></table></div>` +
     (idx.snapshots.length < 3 ? `<p class="note">Only ${idx.snapshots.length} so far. A new line appears whenever civicAPI publishes a change.</p>` : '');
 }
@@ -237,16 +269,20 @@ function movementHTML(idx, used) {
   try {
     const idx = await getJSON(ARCHIVE + 'forecast/index.json');
     if (!idx.snapshots.length) throw new Error('no saved forecast yet');
-    const eligible = idx.snapshots.filter(s => Date.parse(s.observed) <= LOCK);
-    const used = eligible.length ? eligible[eligible.length - 1] : idx.snapshots[0];
+    const pick = await pickForecast(idx);
+    const fc = {chambers: Object.fromEntries(CH.map(([k]) => [k, pick.chosen[k].ch]))};
+    const usedFiles = new Set(CH.map(([k]) => pick.chosen[k].snap.file));
     const locked = Date.now() >= LOCK;
-    const fc = await getJSON(ARCHIVE + 'forecast/' + used.file);
 
-    let res, source;
+    let res, source, testIgnored = false;
     const archived = await getJSON(ARCHIVE + 'results/latest.json').catch(() => null);
     try {
       const d = await getJSON(CACHE + '?k=results');
-      res = {chambers: {house: compactRace(d.house), senate: compactRace(d.senate), gov: compactRace(d.gov)}}; source = 'live from civicAPI';
+      const test = ['house', 'senate', 'gov'].some(k => d[k]?.test_data);
+      // civicAPI runs full TEST elections: never score those as the real thing unless asked (?rehearsal)
+      if (test && !REHEARSAL) { testIgnored = true; throw new Error('test data'); }
+      res = {chambers: {house: compactRace(d.house), senate: compactRace(d.senate), gov: compactRace(d.gov)}};
+      source = test ? "civicAPI's TEST election, live" : 'live from civicAPI';
     } catch (e) {
       if (!archived) throw new Error('results unavailable');
       res = archived; source = `saved copy from ${when(archived.observed)}`;
@@ -257,14 +293,28 @@ function movementHTML(idx, used) {
     const totals = Object.fromEntries(CH.map(([k]) => [k, Object.keys(res.chambers[k].seats).length]));
     const allCalled = CH.every(([k]) => called[k] === totals[k]);
 
+    const groups = {};
+    for (const [k, , , short] of CH) (groups[pick.chosen[k].snap.file] ||= {snap: pick.chosen[k].snap, names: []}).names.push(short);
+    const multi = Object.keys(groups).length > 1;
+    const predHTML = Object.values(groups).map(g => `<div class="v">${multi ? esc(g.names.join(', ')) + ': ' : ''}Saved ${when(g.snap.observed)}</div>
+      <div class="dim" style="font-size:13px">civicAPI's forecast dated ${esc(g.snap.updated)}</div>`).join('') +
+      `<div class="dim" style="font-size:13px">${locked ? 'Locked: the last ones saved before polls opened' : 'The latest so far; it locks on 3 Nov, 10:00 UTC'}</div>`;
+
     let html = `<div class="card status">
-      <div><div class="k">Prediction used</div><div class="v">Saved ${when(used.observed)}</div><div class="dim" style="font-size:13px">civicAPI's forecast dated ${esc(used.updated)} · ${locked ? 'locked: the last one saved before polls opened' : 'the latest so far; it locks on 3 Nov, 10:00 UTC'}</div></div>
-      <div><div class="k">Results</div><div class="v">${DEMO !== null ? '<b>Demo</b> · ' : ''}${allCalled ? 'All races called' : CH.map(([k, , , s]) => `${s} ${called[k]}/${totals[k]}`).join(' · ')}</div><div class="dim" style="font-size:13px">${esc(source)}</div></div>
+      <div><div class="k">Prediction used</div>${predHTML}</div>
+      <div><div class="k">Results</div><div class="v">${REHEARSAL ? '<b>Rehearsal</b> · ' : ''}${DEMO !== null ? '<b>Demo</b> · ' : ''}${allCalled ? 'All races called' : CH.map(([k, , , sh]) => `${sh} ${called[k]}/${totals[k]}`).join(' · ')}</div><div class="dim" style="font-size:13px">${esc(source)}</div></div>
     </div>`;
-    if (!eligible.length) html += `<div class="banner warn"><b>Heads up:</b> no forecast was saved before polls opened, so this uses the earliest one available.</div>`;
+    for (const [k, , , short] of CH) {
+      const r = pick.rejected[k];
+      if (r) html += `<div class="banner warn"><b>${esc(short)} forecast:</b> civicAPI's ${esc(r.snap.updated)} forecast was rejected because ${esc(r.why)}. The prediction used for the ${esc(short)} is the one saved ${when(pick.chosen[k].snap.observed)}. The rejected one stays on record.</div>`;
+      else if (pick.chosen[k].unchecked) html += `<div class="banner warn"><b>${esc(short)} forecast:</b> every saved version failed our sanity checks; the newest is shown anyway.</div>`;
+    }
+    if (!pick.eligible) html += `<div class="banner warn"><b>Heads up:</b> no forecast was saved before polls opened, so this uses the earliest one available.</div>`;
+    if (testIgnored) html += `<div class="banner warn"><b>civicAPI is running a test election right now.</b> Its invented results are ignored here, so nothing below is scored until real races are called. To see the scoring run on the test election anyway, open this page with <a href="?rehearsal">?rehearsal</a>.</div>`;
+    if (REHEARSAL) html += `<div class="banner warn"><b>Rehearsal:</b> these are civicAPI's test results, invented, scored against the real prediction. They are not real results.</div>`;
     if (DEMO !== null) html += `<div class="banner warn"><b>Demo:</b> these results are invented from the forecast's own chances, to show how the scoring reads. They are not real.</div>`;
     for (const c of CH) html += chamberHTML(c, fc.chambers[c[0]], res.chambers[c[0]]);
-    html += movementHTML(idx, used);
+    html += movementHTML(idx, usedFiles);
     app.innerHTML = html;
   } catch (e) {
     console.error(e);

@@ -83,6 +83,7 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .oddsbar .od{background:var(--r0);color:#04122b}
 .oddsbar .or{background:var(--r8);color:#2b0703;justify-content:flex-end}
 .oddsbar .on{background:repeating-linear-gradient(135deg,#2a2f3d 0 4px,#232734 4px 8px)}
+.oddsfix{font-size:11px;color:#e0b84a;margin-top:6px}
 .oddsnote{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:6px;gap:12px}
 #called{margin-top:14px;font-size:13px;color:var(--dim);min-height:20px}
 #called b{color:var(--ink)}
@@ -303,9 +304,35 @@ const Q = new URLSearchParams(location.search);
 const CACHE = Q.get('cache') === 'off' ? null : 'https://atgelibbknccvxtuolay.supabase.co/functions/v1/elections-cache';
 // ?demo=0.6 paints a pretend election night (60% of races reported) over the real forecast
 const DEMO = Q.has('demo') ? Math.min(1, Math.max(0, parseFloat(Q.get('demo')) || 0.55)) : null;
-let LIVE = DEMO !== null || Date.now() >= LIVE_FROM;   // flips by itself when election day arrives, see boot
+// ?rehearsal runs the page against civicAPI's TEST election as if it were election night
+const REHEARSAL = Q.has('rehearsal');
+let LIVE = DEMO !== null || REHEARSAL || Date.now() >= LIVE_FROM;   // flips by itself when election day arrives, see boot
 
-const S = {ch:'house', view:'map', key:null, fc:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}};
+const S = {ch:'house', view:'map', key:null, fc:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}, notes:{}, test:{}};
+
+/* Two things civicAPI has done that the page must not pass on (found 2026-10-28):
+   - a forecast that cannot be right (the 27 Oct Senate one: seat totals added up to 135 in a chamber
+     of 100, and both parties had a 100% chance of control). It is replaced by the last sane copy
+     bundled in data/, and the page says so.
+   - TEST elections: race documents carry test_data=true with invented, fully "called" results. They
+     are ignored in favour of the bundled real copy, and the status bar says so. */
+const SIZE = {house: 435, senate: 100, gov: 50};
+function forecastProblem(k, f) {
+  const t = f.totals || {}, m = f.monte_carlo || {};
+  const total = (t.democrat || 0) + (t.republican || 0) + (t.tossup || 0) + (t.independent || 0);
+  if (total !== SIZE[k]) return `its seat totals add up to ${total} in a chamber of ${SIZE[k]}`;
+  if ((m.prob_democrat_majority || 0) + (m.prob_republican_majority || 0) > 100.5) return 'it gives the two parties chances of control that add up to more than 100%';
+  return null;
+}
+async function vetForecast(k, f) {
+  const why = forecastProblem(k, f);
+  if (!why) { delete S.notes[k]; return f; }
+  try {
+    const old = await (await fetch(`data/forecast-${k}.json`)).json();
+    S.notes[k] = {why, shown: old.last_updated, rejected: f.last_updated};
+    return old;
+  } catch (e) { return f; }
+}
 
 /* -------------------------------------------------------------------- data */
 async function getJSON(url, fallback) {
@@ -331,13 +358,17 @@ async function fromCache(kind) {
 }
 async function pullForecasts() {
   const c = await fromCache('forecast');
-  if (c) { for (const k of Object.keys(CH)) S.fc[k] = c[k]; S.src.fc = 'live'; return; }
+  if (c) { for (const k of Object.keys(CH)) S.fc[k] = await vetForecast(k, c[k]); S.src.fc = 'live'; return; }
   await Promise.all(Object.entries(CH).map(async ([k, c]) => {
     const {data, live} = await getJSON(`${API}/forecast/${c.fc}/2026/civicapi`, `data/forecast-${k}.json`);
-    S.fc[k] = data; S.src.fc = live ? 'live' : (S.src.fc || 'snapshot');
+    S.fc[k] = await vetForecast(k, data); S.src.fc = live ? 'live' : (S.src.fc || 'snapshot');
   }));
 }
-function ingestResults(k, data, live) {
+async function ingestResults(k, data, live) {
+  S.test[k] = !!data.test_data;
+  if (data.test_data && !REHEARSAL) {        // civicAPI is running a test election: use the bundled real copy
+    try { data = await (await fetch(`data/results-${k}.json`)).json(); live = false; } catch (e) { return; }
+  }
   if (!live && S.res[k]?._live) return;   // keep the last good live copy rather than fall back to a stale file
   if (DEMO !== null) data = demoize(k, data);
   data._live = live; S.res[k] = data; S.src.res = live ? 'live' : (S.src.res || 'snapshot');
@@ -345,11 +376,11 @@ function ingestResults(k, data, live) {
 }
 async function pullResults() {
   const c = await fromCache('results');
-  if (c) { for (const k of Object.keys(CH)) ingestResults(k, c[k], true); return; }
+  if (c) { for (const k of Object.keys(CH)) await ingestResults(k, c[k], true); return; }
   await Promise.all(Object.entries(CH).map(async ([k, ch]) => {
     try {
       const {data, live} = await getJSON(`${API}/race/${ch.race}`, `data/results-${k}.json`);
-      ingestResults(k, data, live);
+      await ingestResults(k, data, live);
     } catch (e) { console.warn('results', k, e); }
   }));
 }
@@ -370,6 +401,9 @@ function demoize(ch, doc) {
       {name: f.democratic || 'Democrat',   party:'Democratic', votes:dv, percent:+(dv/t*100).toFixed(1), winner:win && dWins,  color:'#4874a3'},
       {name: f.republican || 'Republican', party:'Republican', votes:rv, percent:+(rv/t*100).toFixed(1), winner:win && !dWins, color:'#c6606b'}]};
   }
+  const won = p => Object.values(out.region_results).filter(r => r.candidates.some(c => c.winner && c.party === p)).length;
+  out.candidates = (doc.candidates || []).map(c => c.name === 'Democrats' ? {...c, seats: (c.seats || 0) + won('Democratic')}
+    : c.name === 'Republicans' ? {...c, seats: (c.seats || 0) + won('Republican')} : c);
   return out;
 }
 
@@ -385,10 +419,15 @@ function result(ch, key) {
   const win = c.find(x => x.winner), rep = r.percent_reporting || 0;
   return {st: win ? 'called' : (rep > 0 || c.some(x => x.votes > 0)) ? 'cnt' : 'pend', rep, c, win, party: win ? party(win.party) : null};
 }
+// civicAPI's national "seats" is a running total, holdovers plus the races called so far (seen in its
+// test election: Senate D 51 = 34 not up + 17 called). The holdovers are what is left after taking
+// the called wins off, which also gives the plain holdover count before anyone has been called.
 function holdovers(ch) {
-  const cs = S.res[ch]?.candidates || [];
+  const doc = S.res[ch]; if (!doc) return {D: 0, R: 0};
+  const cs = doc.candidates || [], rr = Object.values(doc.region_results || {});
+  const won = p => rr.filter(r => (r.candidates || []).some(c => c.winner && party(c.party) === p)).length;
   const n = name => cs.find(c => c.name === name)?.seats || 0;
-  return {D: n('Democrats'), R: n('Republicans')};
+  return {D: Math.max(0, n('Democrats') - won('D')), R: Math.max(0, n('Republicans') - won('R'))};
 }
 function buildSeats(ch) {
   const fc = S.fc[ch];
@@ -435,6 +474,7 @@ function render() {
       <div class="on" style="flex:${rest}" title="Neither party reaches a majority in these simulations: ties, independents"></div>
       <div class="or" style="flex:${pr}">${pr >= 12 ? `R ${Math.round(pr)}%` : ''}</div>
     </div>
+    ${S.notes[ch] ? `<div class="oddsfix">civicAPI's ${shortDate(S.notes[ch].rejected)} ${esc(c.label)} forecast looks wrong (${esc(S.notes[ch].why)}), so this is its ${shortDate(S.notes[ch].shown)} forecast until it is fixed.</div>` : ''}
     <div class="oddsnote"><span>Democrats ${pd}% · expected ${mc.expected_democrat_seats} seats (${mc.democrat_seats_p5}–${mc.democrat_seats_p95})</span>
       <span>Republicans ${pr}% · ${mc.expected_republican_seats}</span></div>`;
 
@@ -594,7 +634,7 @@ function renderCalled(ch, M) {
   const rNeed = ch === 'senate' ? 50 : need;
   const lead = ch === 'gov' ? (D >= need ? ` · <b>Democrats have a majority of governorships</b>` : R >= need ? ` · <b>Republicans have a majority of governorships</b>` : '')
     : D >= need ? ` · <b>Democrats have reached ${need}</b>` : R >= rNeed ? ` · <b>Republicans have reached ${rNeed}${ch === 'senate' ? ' (the Vice President breaks ties)' : ''}</b>` : '';
-  el.innerHTML = `${DEMO !== null ? '<b>Demo night</b> (invented results over the real forecast) · ' : ''}Called so far: <span class="dotD"></span><b>${D}</b> D · <span class="dotR"></span><b>${R}</b> R${co ? ` · <span class="dotO"></span><b>${co}</b> other` : ''} · ${cnt} counting · ${pend} yet to report${lead}`;
+  el.innerHTML = `${DEMO !== null ? '<b>Demo night</b> (invented results over the real forecast) · ' : REHEARSAL ? '<b>Rehearsal</b> (civicAPI\'s test election, not real results) · ' : ''}Called so far: <span class="dotD"></span><b>${D}</b> D · <span class="dotR"></span><b>${R}</b> R${co ? ` · <span class="dotO"></span><b>${co}</b> other` : ''} · ${cnt} counting · ${pend} yet to report${lead}`;
 }
 
 function renderBlocks(ch, M) {
@@ -667,6 +707,7 @@ function renderTable(ch, M) {
   }).join('');
 }
 
+const shortDate = iso => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'});
 function renderStatus() {
   const f = S.fc[S.ch], days = Math.ceil((Date.UTC(2026, 10, 3, 12) - Date.now()) / 864e5);
   const upd = f?.last_updated ? new Date(f.last_updated + 'T00:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'}) : '';
@@ -675,6 +716,9 @@ function renderStatus() {
   else if (LIVE) bits.push(`<b>live</b> · ${S.src.res === 'live' ? 'civicAPI' : 'cached snapshot'}`);
   else bits.push(days > 0 ? `<b>${days} day${days === 1 ? '' : 's'}</b> to election day` : 'Election day');
   if (!LIVE || DEMO !== null) bits.push(`forecast updated ${upd}${S.src.fc === 'live' ? '' : ' (cached)'}`);
+  const testing = Object.values(S.test).some(Boolean);
+  if (REHEARSAL) bits.push(testing ? '<b>rehearsal</b> · civicAPI test data, invented' : '<b>rehearsal</b> · civicAPI is not running test data right now');
+  else if (testing && DEMO === null) bits.push('<b>civicAPI is running test data, ignored</b>');
   $('#status').innerHTML = bits.join(' · ');
 }
 

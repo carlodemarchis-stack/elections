@@ -15,7 +15,12 @@ library only. The scorecard page (scorecard/) compares what is saved here.
     archive/results/latest.json            a copy of the newest result set (fallback for the page)
 
 A snapshot is written only if its content differs from the previous one, so a quiet hour adds
-nothing. The "observed" time is when WE looked, not when civicAPI published; civicAPI's own date
+nothing. Two things civicAPI has done that this guards against (found 2026-10-28):
+  - it runs full TEST elections (race documents carry test_data=true, every race "called" within
+    hours). Results are NOT saved while that flag is on, so test data never reaches the scorecard.
+  - a forecast can be published broken (the 27 Oct Senate one: seat totals added up to 135 in a
+    100-seat chamber, and both parties had a 100% chance of control). It is still saved, as a faithful
+    record of what was published, but marked under "problems" so the scorecard never uses it. The "observed" time is when WE looked, not when civicAPI published; civicAPI's own date
 is kept beside it. Every snapshot stays in git, so any cut-off can be recomputed later.
 """
 import hashlib, json, sys, time, urllib.error, urllib.request
@@ -25,6 +30,7 @@ from pathlib import Path
 BASE = "https://civicapi.org/api/v2"
 ROOT = Path(__file__).resolve().parent.parent / "archive"
 CHAMBERS = {"house": ("house", 87524), "senate": ("senate", 87528), "gov": ("governor", 87535)}
+SIZE = {"house": 435, "senate": 100, "gov": 50}   # seats in each chamber, holdovers included
 
 
 def get(path, tries=4):
@@ -70,6 +76,17 @@ def compact_forecast(f):
             "majority_odds": f.get("majority_odds"), "seats": seats}
 
 
+def forecast_problem(key, c):
+    """Why a chamber's forecast cannot be right, or None. Cheap sanity checks only."""
+    t, m = c.get("totals") or {}, c.get("monte_carlo") or {}
+    total = sum((t.get(k) or 0) for k in ("democrat", "republican", "tossup", "independent"))
+    if total != SIZE[key]:
+        return f"seat totals add up to {total} in a chamber of {SIZE[key]}"
+    if (m.get("prob_democrat_majority") or 0) + (m.get("prob_republican_majority") or 0) > 100.5:
+        return "the chances of control add up to more than 100%"
+    return None
+
+
 def archive_forecast():
     chambers = {k: compact_forecast(get(f"forecast/{slug}/2026/civicapi")) for k, (slug, _) in CHAMBERS.items()}
     h = digest(chambers)
@@ -79,11 +96,20 @@ def archive_forecast():
         print(f"forecast: unchanged (civicAPI dated {chambers['house']['last_updated']})")
         return False
     name, observed = stamp()
-    write(d / f"{name}.json", {"observed": observed, "hash": h, "chambers": chambers})
+    problems = {k: p for k, c in chambers.items() if (p := forecast_problem(k, c))}
+    snap = {"observed": observed, "hash": h, "chambers": chambers}
+    if problems:
+        snap["problems"] = problems
+    write(d / f"{name}.json", snap)
     odds = {k: [c["monte_carlo"].get("prob_democrat_majority"), c["monte_carlo"].get("prob_republican_majority")] for k, c in chambers.items()}
-    idx["snapshots"].append({"file": f"{name}.json", "observed": observed, "updated": chambers["house"]["last_updated"], "hash": h, "odds": odds})
+    entry = {"file": f"{name}.json", "observed": observed, "updated": chambers["house"]["last_updated"], "hash": h, "odds": odds}
+    if problems:
+        entry["problems"] = problems
+    idx["snapshots"].append(entry)
     write(d / "index.json", idx)
     print(f"forecast: SAVED {name}.json (civicAPI dated {chambers['house']['last_updated']}, House D {odds['house'][0]}%)")
+    for k, why in problems.items():
+        print(f"forecast: WARNING {k} looks broken: {why}; saved, but flagged so it is never used")
     return True
 
 
@@ -101,27 +127,42 @@ def compact_race(doc):
         seats[key] = [party(win.get("party")) if win else "", r.get("percent_reporting") or 0,
                       (d or {}).get("votes") or 0, (rp or {}).get("votes") or 0, win.get("name") if win else ""]
     seat_of = lambda name: next((c.get("seats") or 0 for c in doc.get("candidates", []) if c.get("name") == name), 0)
-    return {"last_updated": doc.get("last_updated"), "hold": {"D": seat_of("Democrats"), "R": seat_of("Republicans")}, "seats": seats}
+    won = lambda p: sum(1 for s in seats.values() if s[0] == p)
+    # civicAPI's national "seats" is a RUNNING total (holdovers + races called so far); the holdovers
+    # are what is left after taking the called wins off
+    return {"last_updated": doc.get("last_updated"),
+            "hold": {"D": max(0, seat_of("Democrats") - won("D")), "R": max(0, seat_of("Republicans") - won("R"))}, "seats": seats}
 
 
 def archive_results():
-    chambers = {k: compact_race(get(f"race/{rid}")) for k, (_, rid) in CHAMBERS.items()}
+    docs = {k: get(f"race/{rid}") for k, (_, rid) in CHAMBERS.items()}
+    # civicAPI runs full TEST elections (test_data=true: invented results, every race called within hours).
+    # They are kept apart in archive/rehearsal/ (same format) so they can never reach the scorecard,
+    # and so a dress rehearsal can still be replayed.
+    test = any(d.get("test_data") for d in docs.values())
+    chambers = {k: compact_race(d) for k, d in docs.items()}
     called = {k: sum(1 for s in c["seats"].values() if s[0]) for k, c in chambers.items()}
     total = {k: len(c["seats"]) for k, c in chambers.items()}
     # civicAPI's own last_updated moves with every touch; compare the content that matters
     h = digest({k: {"hold": c["hold"], "seats": c["seats"]} for k, c in chambers.items()})
-    d = ROOT / "results"
+    label = "rehearsal (TEST data)" if test else "results"
+    d = ROOT / ("rehearsal" if test else "results")
     idx = load_index(d / "index.json")
     if idx["snapshots"] and idx["snapshots"][-1]["hash"] == h:
-        print(f"results: unchanged ({called['house']}/{total['house']} House called)")
+        print(f"{label}: unchanged ({called['house']}/{total['house']} House called)")
         return False
     name, observed = stamp()
     snap = {"observed": observed, "hash": h, "chambers": chambers}
+    if test:
+        snap["test"] = True
     write(d / f"{name}.json", snap)
     write(d / "latest.json", snap)
-    idx["snapshots"].append({"file": f"{name}.json", "observed": observed, "hash": h, "called": called, "total": total})
+    entry = {"file": f"{name}.json", "observed": observed, "hash": h, "called": called, "total": total}
+    if test:
+        entry["test"] = True
+    idx["snapshots"].append(entry)
     write(d / "index.json", idx)
-    print(f"results: SAVED {name}.json (called: " + ", ".join(f"{k} {called[k]}/{total[k]}" for k in called) + ")")
+    print(f"{label}: SAVED {name}.json (called: " + ", ".join(f"{k} {called[k]}/{total[k]}" for k in called) + ")")
     return True
 
 

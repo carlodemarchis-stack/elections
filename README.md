@@ -10,6 +10,7 @@ Democratic to safest Republican, filling in live as civicAPI calls them. Static 
 python3 -m http.server 8830     # from this folder; file:// won't work (snapshot fetch)
 ```
 
+- `?rehearsal` runs the page on civicAPI's own test election (see below); `rehearsal/` is its control page.
 - `?demo=0.6` paints an invented election night (60% of races reported) over the real forecast,
   so the election-night states can be seen before there are votes.
 - `#house`, `#senate`, `#gov`, `#house/ca-22` deep-link and survive reload.
@@ -80,6 +81,30 @@ to `archive/` only when something changed:
   outcomes drawn from the forecast's own chances, which is also a check that the maths is calibrated.
 - Run it by hand: `python3 tools/archive.py` (or `forecast` / `results`). It needs no key.
 - The percentages are read as chances of winning (unconfirmed with civicAPI).
+
+## civicAPI test elections, broken forecasts, and the dress rehearsal (found 2026-10-28)
+
+Eight days out, civicAPI started running **test elections**: the race documents carry `test_data: true`,
+with invented results, 100% reporting and every race called within about ten hours (25-26 Oct, again
+27 Oct). Its 27 Oct **Senate forecast was also published broken** (seat totals added up to 135 in a
+100-seat chamber, 100% chance of control for both parties). What that means for the code:
+
+- **`candidates[].seats` on the national documents is a RUNNING total** (holdovers + races called so
+  far; Senate D 51 = 34 not up + 17 called). The holdovers are `seats - called wins`. The page, the
+  archive and the scorecard all do this now; before the fix the Senate bar would have grown past 100
+  seats the moment races were called. Caught by the test data.
+- **Test data is never shown as real.** Outside `?rehearsal` the page and scorecard ignore
+  `test_data` results and say so; `tools/archive.py` keeps them apart in `archive/rehearsal/` (same
+  format, replayable) and `tools/fetch.py` refuses to overwrite good files with them.
+- **A forecast that fails sanity checks is never used**: chamber totals must add up to 435 / 100 / 50
+  and the two chances of control must not exceed 100% together. The page and guide fall back to the
+  bundled `data/` copy with a visible note; the scorecard picks the last sane snapshot per chamber; the
+  archive still saves the broken one (faithful record) but flags it under `problems` (shown as a warning
+  in the movement table).
+- **`?rehearsal`** runs the page and `scorecard/?rehearsal` against the test election as if it were the
+  real night (top bar says so). `rehearsal/` is the control page: is a test election on right now, the
+  saved test elections' pace, and one-click links. **On the morning of 3 Nov check that the test flag
+  there is OFF**: if civicAPI leaves it on, the live page would ignore the real results.
 
 ## civicAPI, as found (docs page is JS-rendered; routes were read from its bundle)
 
