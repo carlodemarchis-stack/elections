@@ -146,6 +146,12 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 /* ---- columns: map + detail ---- */
 .cols{display:grid;grid-template-columns:minmax(0,1fr) clamp(330px,22vw,440px);gap:clamp(20px,2.5vw,40px);align-items:start}
 [hidden]{display:none!important}
+#replay{position:fixed;left:0;right:0;bottom:0;z-index:45;display:flex;align-items:center;gap:14px;padding:10px clamp(16px,2.5vw,48px);background:rgba(9,11,18,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line);font-size:12px;color:var(--dim)}
+#replay button{flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--ink);color:#0a0d14;font-size:15px;cursor:pointer}
+#replay input{flex:1 1 auto;min-width:80px;accent-color:#e8ecf5}
+#replay .lab{flex:0 1 auto;min-width:0}
+#replay .lab b{color:var(--ink)}
+@media (max-width:700px){#replay{flex-wrap:wrap}#replay .lab{flex:1 1 100%}}
 .h2row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:30px}
 .h2row h2{margin:0 0 10px}
 .h2row .seg{margin-bottom:6px}
@@ -306,7 +312,9 @@ const CACHE = Q.get('cache') === 'off' ? null : 'https://atgelibbknccvxtuolay.su
 const DEMO = Q.has('demo') ? Math.min(1, Math.max(0, parseFloat(Q.get('demo')) || 0.55)) : null;
 // ?rehearsal runs the page against civicAPI's TEST election as if it were election night
 const REHEARSAL = Q.has('rehearsal');
-let LIVE = DEMO !== null || REHEARSAL || Date.now() >= LIVE_FROM;   // flips by itself when election day arrives, see boot
+// ?replay steps through the saved test elections (archive/rehearsal/) frame by frame, with a scrubber
+const REPLAY = Q.has('replay');
+let LIVE = DEMO !== null || REHEARSAL || REPLAY || Date.now() >= LIVE_FROM;   // flips by itself when election day arrives, see boot
 
 const S = {ch:'house', view:'map', key:null, fc:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}, notes:{}, test:{}};
 
@@ -375,6 +383,7 @@ async function ingestResults(k, data, live) {
   for (const [rk, r] of Object.entries(data.region_results || {})) if (r.name) S.names[k + ':' + rk] = r.name;
 }
 async function pullResults() {
+  if (REPLAY && S.booted) return;           // the replay owns the results once it has started
   const c = await fromCache('results');
   if (c) { for (const k of Object.keys(CH)) await ingestResults(k, c[k], true); return; }
   await Promise.all(Object.entries(CH).map(async ([k, ch]) => {
@@ -634,7 +643,7 @@ function renderCalled(ch, M) {
   const rNeed = ch === 'senate' ? 50 : need;
   const lead = ch === 'gov' ? (D >= need ? ` · <b>Democrats have a majority of governorships</b>` : R >= need ? ` · <b>Republicans have a majority of governorships</b>` : '')
     : D >= need ? ` · <b>Democrats have reached ${need}</b>` : R >= rNeed ? ` · <b>Republicans have reached ${rNeed}${ch === 'senate' ? ' (the Vice President breaks ties)' : ''}</b>` : '';
-  el.innerHTML = `${DEMO !== null ? '<b>Demo night</b> (invented results over the real forecast) · ' : REHEARSAL ? '<b>Rehearsal</b> (civicAPI\'s test election, not real results) · ' : ''}Called so far: <span class="dotD"></span><b>${D}</b> D · <span class="dotR"></span><b>${R}</b> R${co ? ` · <span class="dotO"></span><b>${co}</b> other` : ''} · ${cnt} counting · ${pend} yet to report${lead}`;
+  el.innerHTML = `${DEMO !== null ? '<b>Demo night</b> (invented results over the real forecast) · ' : REPLAY ? '<b>Replay</b> (a saved civicAPI test election, not real results) · ' : REHEARSAL ? '<b>Rehearsal</b> (civicAPI\'s test election, not real results) · ' : ''}Called so far: <span class="dotD"></span><b>${D}</b> D · <span class="dotR"></span><b>${R}</b> R${co ? ` · <span class="dotO"></span><b>${co}</b> other` : ''} · ${cnt} counting · ${pend} yet to report${lead}`;
 }
 
 function renderBlocks(ch, M) {
@@ -707,6 +716,7 @@ function renderTable(ch, M) {
   }).join('');
 }
 
+const fmtUTC = iso => new Date(iso).toLocaleString('en-GB', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC'}) + ' UTC';
 const shortDate = iso => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'});
 function renderStatus() {
   const f = S.fc[S.ch], days = Math.ceil((Date.UTC(2026, 10, 3, 12) - Date.now()) / 864e5);
@@ -717,7 +727,8 @@ function renderStatus() {
   else bits.push(days > 0 ? `<b>${days} day${days === 1 ? '' : 's'}</b> to election day` : 'Election day');
   if (!LIVE || DEMO !== null) bits.push(`forecast updated ${upd}${S.src.fc === 'live' ? '' : ' (cached)'}`);
   const testing = Object.values(S.test).some(Boolean);
-  if (REHEARSAL) bits.push(testing ? '<b>rehearsal</b> · civicAPI test data, invented' : '<b>rehearsal</b> · civicAPI is not running test data right now');
+  if (REPLAY) bits.push(`<b>replay</b> · saved test election${S.replayAt ? ', ' + fmtUTC(S.replayAt) : ''}`);
+  else if (REHEARSAL) bits.push(testing ? '<b>rehearsal</b> · civicAPI test data, invented' : '<b>rehearsal</b> · civicAPI is not running test data right now');
   else if (testing && DEMO === null) bits.push('<b>civicAPI is running test data, ignored</b>');
   $('#status').innerHTML = bits.join(' · ');
 }
@@ -764,6 +775,60 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('mouseleave', () => tip.style.display = 'none');
 
 /* -------------------------------------------------------------------- boot */
+/* ---------------------------------------------------------------- replay
+   Frames are the compact snapshots tools/archive.py saved of civicAPI's test elections. Each is turned
+   back into the shape the page already reads, so everything (called, counting, flipped, the counters)
+   behaves exactly as it does live. */
+function snapToDoc(k, c) {
+  const rr = {}, won = p => Object.values(c.seats).filter(r => r[0] === p).length;
+  for (const [key, r] of Object.entries(c.seats)) {
+    const [wp, rep, dv, rv, wname] = r, f = S.fc[k].states[key.toUpperCase()] || {}, t = (dv + rv) || 1;
+    const cands = [
+      {name: wp === 'D' && wname ? wname : f.democratic || 'Democrat',   party: 'Democratic', votes: dv, percent: +(dv / t * 100).toFixed(1), winner: wp === 'D', color: '#4874a3'},
+      {name: wp === 'R' && wname ? wname : f.republican || 'Republican', party: 'Republican', votes: rv, percent: +(rv / t * 100).toFixed(1), winner: wp === 'R', color: '#c6606b'}];
+    if (wp === 'O') cands.push({name: wname || 'Independent', party: 'Independent', votes: 0, percent: 0, winner: true, color: '#e0bb24'});
+    rr[key] = {name: S.names[k + ':' + key], percent_reporting: rep, candidates: cands};
+  }
+  return {last_updated: c.last_updated, test_data: true, region_results: rr,
+    candidates: [{name: 'Democrats', seats: c.hold.D + won('D')}, {name: 'Republicans', seats: c.hold.R + won('R')}]};
+}
+async function startReplay() {
+  const idx = await (await fetch('archive/rehearsal/index.json', {cache: 'no-store'})).json();
+  const frames = await Promise.all(idx.snapshots.map(s => fetch('archive/rehearsal/' + s.file).then(r => r.json()).then(snap => ({meta: s, snap}))));
+  if (!frames.length) { $('#app').insertAdjacentHTML('afterbegin', '<p style="color:#e0b84a">No test election has been saved yet, so there is nothing to replay.</p>'); return; }
+  const bar = document.createElement('div');
+  bar.id = 'replay';
+  bar.innerHTML = `<button id="rp-play" aria-label="Play">▶</button><input id="rp-slider" type="range" min="0" max="${frames.length - 1}" value="0" aria-label="Frame"><span class="lab" id="rp-label"></span>`;
+  document.body.appendChild(bar);
+  const room = () => { document.body.style.paddingBottom = (bar.offsetHeight + 12) + 'px'; };
+  room(); addEventListener('resize', room);
+  let timer = null;
+  const show = i => {
+    const fr = frames[i];
+    for (const k of Object.keys(CH)) S.res[k] = Object.assign(snapToDoc(k, fr.snap.chambers[k]), {_live: true});
+    S.src.res = 'live'; S.replayAt = fr.snap.observed;
+    $('#rp-slider').value = i;
+    const c = fr.meta.called, t = fr.meta.total;
+    $('#rp-label').innerHTML = `Frame <b>${i + 1}</b> of ${frames.length} · <b>${fmtUTC(fr.snap.observed)}</b> · House ${c.house}/${t.house} · Senate ${c.senate}/${t.senate} · Governors ${c.gov}/${t.gov}`;
+    render();
+  };
+  const stop = () => { clearInterval(timer); timer = null; $('#rp-play').textContent = '▶'; $('#rp-play').setAttribute('aria-label', 'Play'); };
+  const play = () => {
+    if (+$('#rp-slider').value >= frames.length - 1) show(0);
+    $('#rp-play').textContent = '❚❚'; $('#rp-play').setAttribute('aria-label', 'Pause');
+    timer = setInterval(() => { const i = +$('#rp-slider').value + 1; if (i >= frames.length) { stop(); return; } show(i); }, 1600);
+  };
+  $('#rp-play').addEventListener('click', () => timer ? stop() : play());
+  $('#rp-slider').addEventListener('input', e => { stop(); show(+e.target.value); });
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+    const i = +$('#rp-slider').value;
+    if (e.key === 'ArrowRight' && i < frames.length - 1) { stop(); show(i + 1); }
+    else if (e.key === 'ArrowLeft' && i > 0) { stop(); show(i - 1); }
+  });
+  show(0);
+}
+
 (async () => {
   readView();
   readHash();
@@ -775,6 +840,8 @@ document.addEventListener('mouseleave', () => tip.style.display = 'none');
     return;
   }
   render();
+  S.booted = true;
+  if (REPLAY) await startReplay();
   // Results: every minute once it is election day, but only while the tab is visible, and straight
   // away when you come back to it. A tab opened before election day flips into results mode by
   // itself, so nobody has to reload on the morning.

@@ -11,6 +11,9 @@ python3 -m http.server 8830     # from this folder; file:// won't work (snapshot
 ```
 
 - `?rehearsal` runs the page on civicAPI's own test election (see below); `rehearsal/` is its control page.
+- `?replay` steps through the saved test elections (`archive/rehearsal/`) frame by frame with a play button
+  and scrubber (arrow keys step); frames are turned back into the shape the live feed has, so every state
+  behaves exactly as it does live. Works any time, even when no test election is running.
 - `?demo=0.6` paints an invented election night (60% of races reported) over the real forecast,
   so the election-night states can be seen before there are votes.
 - `#house`, `#senate`, `#gov`, `#house/ca-22` deep-link and survive reload.

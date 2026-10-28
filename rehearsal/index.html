@@ -63,8 +63,12 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:var(--pa
   </p>
   <p class="note">When no test election is running, these simply show the real, empty page with a note saying so.</p>
 
+  <h2>Replay a saved test election</h2>
+  <p class="dim">Every change in civicAPI's test feed is saved. The replay steps through those saved frames on the real page, with a play button and a scrubber at the bottom, so you can watch a night fill in at any time, even when no test election is running. Arrow keys step one frame.</p>
+  <p><a class="pill" href="../?replay#house">Replay: House</a><a class="pill" href="../?replay#senate">Senate</a><a class="pill" href="../?replay#gov">Governors</a></p>
+
   <h2>How the saved test elections counted</h2>
-  <p class="dim">Every change in civicAPI's test feed is saved apart from the real results. Each line is one saved copy: how many races were called when we looked. It shows how fast a real night can be expected to fill in.</p>
+  <p class="dim">Each line is one saved frame: how many races were called when we looked. It shows how fast a real night can be expected to fill in.</p>
   <div class="card"><div class="tblwrap"><table id="hist"><thead><tr><th>Saved</th><th class="n">House</th><th class="n">Senate</th><th class="n">Governors</th></tr></thead><tbody><tr><td colspan="4" class="dim">Loading…</td></tr></tbody></table></div></div>
 
   <h2>What the rehearsal has taught us so far</h2>
