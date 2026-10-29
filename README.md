@@ -99,11 +99,15 @@ with invented results, 100% reporting and every race called within about ten hou
 - **Test data is never shown as real.** Outside `?rehearsal` the page and scorecard ignore
   `test_data` results and say so; `tools/archive.py` keeps them apart in `archive/rehearsal/` (same
   format, replayable) and `tools/fetch.py` refuses to overwrite good files with them.
-- **A forecast that fails sanity checks is never used**: chamber totals must add up to 435 / 100 / 50
-  and the two chances of control must not exceed 100% together. The page and guide fall back to the
-  bundled `data/` copy with a visible note; the scorecard picks the last sane snapshot per chamber; the
-  archive still saves the broken one (faithful record) but flags it under `problems` (shown as a warning
-  in the movement table).
+- **A forecast that fails sanity checks is not used as published**: chamber totals must add up to 435 / 100 / 50
+  and the two chances of control must not exceed 100% together. If its per-race ratings are still sound (the
+  right number of races: 435 / 35 / 36), the page, guide and scorecard keep them and rebuild the totals from
+  them (seats not up come from the last sane copy), borrowing only the odds and seat range from that copy,
+  with a visible note. This is what happens to the 27 Oct Senate forecast (49 D / 5 tossup / 46 R from the
+  races; odds D 46.6% / R 28% from 20 Oct). civicAPI's own site does the same for the seat counts but
+  still shows the broken 100% / 100% odds. If the races themselves do not add up, the whole last sane copy
+  is used. The archive saves the broken one (faithful record) flagged under `problems` (a warning in the
+  movement table).
 - **`?rehearsal`** runs the page and `scorecard/?rehearsal` against the test election as if it were the
   real night (top bar says so). `rehearsal/` is the control page: is a test election on right now, the
   saved test elections' pace, and one-click links. **On the morning of 3 Nov check that the test flag

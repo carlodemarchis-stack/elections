@@ -113,7 +113,7 @@ const Q = new URLSearchParams(location.search);
 const DEMO = Q.has('demo') ? Math.min(1, Math.max(0, parseFloat(Q.get('demo')) || 0.6)) : null;
 // ?rehearsal scores civicAPI's TEST election (invented results) as if it were the real one
 const REHEARSAL = Q.has('rehearsal');
-const SIZE = {house: 435, senate: 100, gov: 50};
+const SIZE = {house: 435, senate: 100, gov: 50}, RACES = {house: 435, senate: 35, gov: 36};
 /* the same sanity checks as tools/archive.py: a forecast that cannot be right is never used */
 function forecastProblem(k, c) {
   const t = c.totals || {}, m = c.monte_carlo || {};
@@ -121,6 +121,18 @@ function forecastProblem(k, c) {
   if (total !== SIZE[k]) return `its seat totals add up to ${total} in a chamber of ${SIZE[k]}`;
   if ((m.prob_democrat_majority || 0) + (m.prob_republican_majority || 0) > 100.5) return 'its chances of control add up to more than 100%';
   return null;
+}
+
+/* A forecast with broken totals or odds can still have sound per-race ratings (the 27 Oct Senate one did).
+   Keep those, rebuild the totals from them (seats not up come from the last sane copy) and borrow the odds
+   and range from it. Null if the races themselves do not add up. */
+const tally = seats => { const r = Object.values(seats).map(s => s[0] || ''); return {democrat: r.filter(x => / D$/.test(x)).length, republican: r.filter(x => / R$/.test(x)).length, tossup: r.filter(x => x === 'Tossup').length, independent: 0}; };
+function repairForecast(k, c, old) {
+  if (!old || forecastProblem(k, old) || Object.keys(c.seats || {}).length !== RACES[k]) return null;
+  const a = tally(c.seats), b = tally(old.seats), t = {};
+  for (const p of Object.keys(a)) t[p] = (old.totals[p] || 0) - b[p] + a[p];
+  if (Object.values(t).reduce((x, y) => x + y, 0) !== SIZE[k]) return null;
+  return {...c, totals: t, monte_carlo: old.monte_carlo, majority_odds: old.majority_odds};
 }
 
 const getJSON = async u => { const r = await fetch(u, {cache:'no-store'}); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); };
@@ -246,9 +258,14 @@ async function pickForecast(idx) {
     for (const [k] of CH) {
       if (chosen[k]) continue;
       const c = files[sn.file].chambers[k], why = forecastProblem(k, c);
-      if (!why) chosen[k] = {snap: sn, ch: c}; else rejected[k] ??= {snap: sn, why};
+      if (!why) chosen[k] = {snap: sn, ch: c}; else rejected[k] ??= {snap: sn, why, ch: c};
     }
     if (CH.every(([k]) => chosen[k])) break;
+  }
+  // a rejected forecast newer than the sane one keeps its race ratings when they are sound; odds and range stay the sane copy's
+  for (const [k] of CH) if (rejected[k] && chosen[k]) {
+    const fixed = repairForecast(k, rejected[k].ch, chosen[k].ch);
+    if (fixed) { rejected[k].oddsSnap = chosen[k].snap; chosen[k] = {snap: rejected[k].snap, ch: fixed, repaired: true}; }
   }
   for (const [k] of CH) if (!chosen[k]) { const sn = pool[pool.length - 1]; chosen[k] = {snap: sn, ch: files[sn.file].chambers[k], unchecked: true}; }
   return {chosen, rejected, eligible: eligible.length > 0};
@@ -271,7 +288,7 @@ function movementHTML(idx, usedFiles) {
     if (!idx.snapshots.length) throw new Error('no saved forecast yet');
     const pick = await pickForecast(idx);
     const fc = {chambers: Object.fromEntries(CH.map(([k]) => [k, pick.chosen[k].ch]))};
-    const usedFiles = new Set(CH.map(([k]) => pick.chosen[k].snap.file));
+    const usedFiles = new Set(CH.flatMap(([k]) => [pick.chosen[k].snap.file, pick.rejected[k]?.oddsSnap?.file].filter(Boolean)));
     const locked = Date.now() >= LOCK;
 
     let res, source, testIgnored = false;
@@ -306,7 +323,8 @@ function movementHTML(idx, usedFiles) {
     </div>`;
     for (const [k, , , short] of CH) {
       const r = pick.rejected[k];
-      if (r) html += `<div class="banner warn"><b>${esc(short)} forecast:</b> civicAPI's ${esc(r.snap.updated)} forecast was rejected because ${esc(r.why)}. The prediction used for the ${esc(short)} is the one saved ${when(pick.chosen[k].snap.observed)}. The rejected one stays on record.</div>`;
+      if (r?.oddsSnap) html += `<div class="banner warn"><b>${esc(short)} forecast:</b> civicAPI's ${esc(r.snap.updated)} forecast had broken totals and odds (${esc(r.why)}). The prediction uses its race ratings and percentages (saved ${when(r.snap.observed)}) with the odds and seat range from the one saved ${when(r.oddsSnap.observed)}. The broken one stays on record.</div>`;
+      else if (r) html += `<div class="banner warn"><b>${esc(short)} forecast:</b> civicAPI's ${esc(r.snap.updated)} forecast was rejected because ${esc(r.why)}. The prediction used for the ${esc(short)} is the one saved ${when(pick.chosen[k].snap.observed)}. The rejected one stays on record.</div>`;
       else if (pick.chosen[k].unchecked) html += `<div class="banner warn"><b>${esc(short)} forecast:</b> every saved version failed our sanity checks; the newest is shown anyway.</div>`;
     }
     if (!pick.eligible) html += `<div class="banner warn"><b>Heads up:</b> no forecast was saved before polls opened, so this uses the earliest one available.</div>`;

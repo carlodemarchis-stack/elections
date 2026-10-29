@@ -320,11 +320,12 @@ const S = {ch:'house', view:'map', key:null, fc:{}, res:{}, names:{}, seats:{}, 
 
 /* Two things civicAPI has done that the page must not pass on (found 2026-10-28):
    - a forecast that cannot be right (the 27 Oct Senate one: seat totals added up to 135 in a chamber
-     of 100, and both parties had a 100% chance of control). It is replaced by the last sane copy
-     bundled in data/, and the page says so.
+     of 100, and both parties had a 100% chance of control). Its per-race ratings are kept when they are
+     sound and only the totals and odds come from the last sane copy bundled in data/; otherwise the whole
+     copy is used. Either way the page says so.
    - TEST elections: race documents carry test_data=true with invented, fully "called" results. They
      are ignored in favour of the bundled real copy, and the status bar says so. */
-const SIZE = {house: 435, senate: 100, gov: 50};
+const SIZE = {house: 435, senate: 100, gov: 50}, RACES = {house: 435, senate: 35, gov: 36};
 function forecastProblem(k, f) {
   const t = f.totals || {}, m = f.monte_carlo || {};
   const total = (t.democrat || 0) + (t.republican || 0) + (t.tossup || 0) + (t.independent || 0);
@@ -332,13 +333,24 @@ function forecastProblem(k, f) {
   if ((m.prob_democrat_majority || 0) + (m.prob_republican_majority || 0) > 100.5) return 'it gives the two parties chances of control that add up to more than 100%';
   return null;
 }
+/* A forecast whose totals or odds are broken can still have sound per-race ratings (the 27 Oct Senate one
+   did). Keep those, rebuild the totals from them (seats not up come from the last sane copy) and borrow
+   the odds from that copy. Null if the races themselves do not add up. */
+const tally = st => { const r = Object.values(st).map(s => s.rating || ''); return {democrat: r.filter(x => / D$/.test(x)).length, republican: r.filter(x => / R$/.test(x)).length, tossup: r.filter(x => x === 'Tossup').length, independent: 0}; };
+function repairForecast(k, f, old) {
+  if (!old || forecastProblem(k, old) || Object.keys(f.states || {}).length !== RACES[k]) return null;
+  const a = tally(f.states), b = tally(old.states), t = {};
+  for (const p of Object.keys(a)) t[p] = (old.totals[p] || 0) - b[p] + a[p];
+  if (Object.values(t).reduce((x, y) => x + y, 0) !== SIZE[k]) return null;
+  return {...f, totals: t, monte_carlo: old.monte_carlo, majority_odds: old.majority_odds, distribution: old.distribution};
+}
 async function vetForecast(k, f) {
   const why = forecastProblem(k, f);
   if (!why) { delete S.notes[k]; return f; }
   try {
-    const old = await (await fetch(`data/forecast-${k}.json`)).json();
-    S.notes[k] = {why, shown: old.last_updated, rejected: f.last_updated};
-    return old;
+    const old = await (await fetch(`data/forecast-${k}.json`)).json(), fixed = repairForecast(k, f, old);
+    S.notes[k] = {why, shown: old.last_updated, rejected: f.last_updated, kept: !!fixed};
+    return fixed || old;
   } catch (e) { return f; }
 }
 
@@ -483,7 +495,9 @@ function render() {
       <div class="on" style="flex:${rest}" title="Neither party reaches a majority in these simulations: ties, independents"></div>
       <div class="or" style="flex:${pr}">${pr >= 12 ? `R ${Math.round(pr)}%` : ''}</div>
     </div>
-    ${S.notes[ch] ? `<div class="oddsfix">civicAPI's ${shortDate(S.notes[ch].rejected)} ${esc(c.label)} forecast looks wrong (${esc(S.notes[ch].why)}), so this is its ${shortDate(S.notes[ch].shown)} forecast until it is fixed.</div>` : ''}
+    ${S.notes[ch] ? `<div class="oddsfix">${S.notes[ch].kept
+      ? `civicAPI's ${shortDate(S.notes[ch].rejected)} ${esc(c.label)} odds look wrong (${esc(S.notes[ch].why)}). The seats and percentages here are its ${shortDate(S.notes[ch].rejected)} ratings; the odds are from its ${shortDate(S.notes[ch].shown)} forecast until it is fixed.`
+      : `civicAPI's ${shortDate(S.notes[ch].rejected)} ${esc(c.label)} forecast looks wrong (${esc(S.notes[ch].why)}), so this is its ${shortDate(S.notes[ch].shown)} forecast until it is fixed.`}</div>` : ''}
     <div class="oddsnote"><span>Democrats ${pd}% · expected ${mc.expected_democrat_seats} seats (${mc.democrat_seats_p5}–${mc.democrat_seats_p95})</span>
       <span>Republicans ${pr}% · ${mc.expected_republican_seats}</span></div>`;
 

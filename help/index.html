@@ -222,14 +222,26 @@ async function getJSON(url, fallback) {
   try {
     const fcs = await Promise.all(CH.map(([k,,slug]) => getJSON(`${API}/forecast/${slug}/2026/civicapi`, `../data/forecast-${k}.json`)));
     // a forecast that cannot be right (seat totals that do not add up, chances of control above 100% in
-    // total) is replaced by the last sane copy bundled with the site
-    const SIZE = {house: 435, senate: 100, gov: 50}, replaced = [];
+    // total): when its per-race ratings are sound they are kept and only the totals and odds come from the
+    // last sane copy bundled with the site; otherwise that whole copy is used
+    const SIZE = {house: 435, senate: 100, gov: 50}, RACES = {house: 435, senate: 35, gov: 36}, replaced = [], fixed = [];
+    const bad = (k, f) => { const t = f.totals || {}, m = f.monte_carlo || {};
+      return ((t.democrat || 0) + (t.republican || 0) + (t.tossup || 0) + (t.independent || 0)) !== SIZE[k] || (m.prob_democrat_majority || 0) + (m.prob_republican_majority || 0) > 100.5; };
+    const tally = st => { const r = Object.values(st).map(s => s.rating || ''); return {democrat: r.filter(x => / D$/.test(x)).length, republican: r.filter(x => / R$/.test(x)).length, tossup: r.filter(x => x === 'Tossup').length, independent: 0}; };
     for (let i = 0; i < CH.length; i++) {
-      const [k, label] = CH[i], t = fcs[i].totals || {}, m = fcs[i].monte_carlo || {};
-      const total = (t.democrat || 0) + (t.republican || 0) + (t.tossup || 0) + (t.independent || 0);
-      if (total !== SIZE[k] || (m.prob_democrat_majority || 0) + (m.prob_republican_majority || 0) > 100.5) {
-        try { fcs[i] = await (await fetch(`../data/forecast-${k}.json`)).json(); replaced.push(label); } catch (e) {}
-      }
+      const [k, label] = CH[i];
+      if (!bad(k, fcs[i])) continue;
+      try {
+        const old = await (await fetch(`../data/forecast-${k}.json`)).json(), f = fcs[i];
+        let t = null;
+        if (!bad(k, old) && Object.keys(f.states || {}).length === RACES[k]) {
+          const a = tally(f.states), b = tally(old.states); t = {};
+          for (const p of Object.keys(a)) t[p] = (old.totals[p] || 0) - b[p] + a[p];
+          if (Object.values(t).reduce((x, y) => x + y, 0) !== SIZE[k]) t = null;
+        }
+        if (t) { fcs[i] = {...f, totals: t, monte_carlo: old.monte_carlo}; fixed.push(label); }
+        else { fcs[i] = old; replaced.push(label); }
+      } catch (e) {}
     }
     const rows = CH.map(([k, label, , need], i) => {
       const f = fcs[i], t = f.totals || {}, m = f.monte_carlo || {};
@@ -245,6 +257,7 @@ async function getJSON(url, fallback) {
     const days = Math.ceil((Date.UTC(2026, 10, 3, 12) - Date.now()) / 864e5);
     const when = days > 1 ? `${days} days to election day` : days === 1 ? 'one day to election day' : days === 0 ? 'election day' : 'the votes are being counted: see the live page';
     document.getElementById('rn-head').innerHTML = `<b>Right now</b> · ${when} · forecast updated ${upd}`;
+    if (fixed.length) document.getElementById('rn-head').innerHTML += `<br><span style="color:#e0b84a">civicAPI's latest ${fixed.join(' and ')} odds failed our sanity checks, so ${fixed.length > 1 ? 'those rows show' : 'that row shows'} its current race ratings with the odds from the earlier forecast.</span>`;
     if (replaced.length) document.getElementById('rn-head').innerHTML += `<br><span style="color:#e0b84a">civicAPI's latest ${replaced.join(' and ')} forecast failed our sanity checks, so ${replaced.length > 1 ? 'those rows show' : 'that row shows'} the earlier one.</span>`;
   } catch (e) {
     document.getElementById('rn-head').textContent = 'The live forecast could not be loaded. The explanation below still applies.';
