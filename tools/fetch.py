@@ -7,7 +7,7 @@ It will NOT overwrite a good copy with bad data: results flagged test_data (civi
 elections) and forecasts whose seat totals or chances of control cannot be right are skipped and the
 file already on disk is kept. Six requests, one second apart: the national House / Senate / Governors race
 documents (each carries every district or state in `region_results`) and the
-three civicAPI forecasts. The page reads the live API first and only falls back
+three civicAPI forecasts, plus Kalshi and Fox News read through the same route (data/sources.json). The page reads the live API first and only falls back
 to these files, so this is for offline work and for a sane first paint.
 """
 import json, sys, time, urllib.request, urllib.error
@@ -63,3 +63,16 @@ for chamber, slug in FORECASTS.items():
     (OUT / f"forecast-{chamber}.json").write_text(json.dumps(f, separators=(",", ":")))
     print(f"forecast-{chamber}: {len(f['states'])} seats, updated {f['last_updated']}, totals {f['totals']}")
     time.sleep(1)
+
+# Kalshi and Fox News, read through the same forecast route. One file, the same slim shape the
+# elections-cache function serves: {source: {chamber: {last_updated, has_percentages, states: {CODE: [rating, pct|null]}}}}
+sources = {}
+for src in ("kalshi", "foxnews"):
+    sources[src] = {}
+    for chamber, slug in FORECASTS.items():
+        f = get(f"forecast/{slug}/2026/{src}")
+        sources[src][chamber] = {"last_updated": f.get("last_updated"), "has_percentages": f.get("has_percentages"),
+                                 "states": {k: [s.get("rating"), s.get("democrat_pct")] for k, s in f["states"].items()}}
+        time.sleep(1)
+(OUT / "sources.json").write_text(json.dumps(sources, separators=(",", ":")))
+print("sources: " + ", ".join(f"{s} " + "/".join(str(len(v['states'])) for v in c.values()) for s, c in sources.items()))

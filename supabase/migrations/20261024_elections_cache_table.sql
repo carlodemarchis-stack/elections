@@ -11,3 +11,6 @@ revoke all on public.elections_cache from anon, authenticated;
 comment on table public.elections_cache is
   'Shared cache for the elections-cache edge function: last civicAPI payload per feed plus a refresh lock. Service role only.';
 insert into public.elections_cache (kind) values ('results'), ('forecast') on conflict do nothing;
+
+-- 2026-10-30: a third feed, Kalshi and Fox News read through civicAPI's per-source forecast route.
+insert into public.elections_cache (kind) values ('sources') on conflict do nothing;

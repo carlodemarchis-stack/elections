@@ -219,10 +219,59 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
 #foot{margin-top:40px;font-size:11px;color:var(--faint);line-height:1.6;max-width:760px}
 #foot a{color:var(--dim)}
 
+/* ---- sources: the three cards that explain what each forecast is, and switch the page between them ---- */
+.r9{--c:#2a2e3a;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.16) 0 2px,transparent 2px 6px)}
+#detail .chip.r9{background-color:#2a2e3a;color:var(--dim)}
+#sources{margin-top:22px}
+.srcs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.src{text-align:left;cursor:pointer;background:var(--pan2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;color:var(--ink)}
+.src:hover{border-color:rgba(150,166,205,.4)}
+.src.on{background:var(--pan);border-color:var(--sc);box-shadow:inset 0 0 0 1px var(--sc)}
+.src .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.src .dot{width:10px;height:10px;border-radius:50%;background:var(--sc);flex:none}
+.src .top b{font-size:15px}
+.src .tag{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line);border-radius:99px;padding:1px 8px;margin-left:auto;white-space:nowrap}
+.src .read{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--dim)}
+.src .read b{color:var(--ink);font-size:18px;padding-right:2px}
+.src .what{font-size:12.5px;line-height:1.5;color:var(--dim)}
+.src .meta{font-size:11px;color:var(--faint);line-height:1.4}
+.src.on .meta.now{color:var(--sc)}
+.src[data-src=civicapi],.sc-civicapi{--sc:#e8ecf5}.src[data-src=kalshi],.sc-kalshi{--sc:#4fd1c5}.src[data-src=foxnews],.sc-foxnews{--sc:#f5b942}
+/* where they disagree */
+#diff{margin-top:30px}
+#diff h2{margin-top:0}
+.dsub{font-size:13px;color:var(--dim);max-width:860px}
+.dkey{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:10px 0 6px}
+.dkey i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px;background:var(--sc)}
+.drow{display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr) 96px;gap:14px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:8px 6px;cursor:pointer;color:var(--ink)}
+.drow:hover,.drow.sel{background:var(--pan2)}
+.drow .dn{font-size:14px;font-weight:700;line-height:1.25}
+.drow .dn small{display:block;font-weight:300;font-size:11px;color:var(--dim)}
+.dscale{position:relative;height:42px;border-radius:5px;overflow:hidden;display:flex;gap:1px;background:var(--bg)}
+.dscale i.cell{flex:1 1 0;background:var(--c);opacity:.3}
+.dscale .span{position:absolute;top:50%;height:3px;margin-top:-1.5px;background:rgba(232,236,245,.75);border-radius:2px}
+.dscale .mk{position:absolute;width:14px;height:14px;border-radius:50%;transform:translateX(-50%);background:var(--sc);border:2px solid var(--bg)}
+.dlab{font-size:11px;line-height:14px;color:var(--dim);white-space:nowrap}
+.dlab b{display:inline-block;width:13px;color:var(--sc)}
+.dread{font-size:12.5px;color:var(--dim);margin-top:10px;line-height:1.6}
+.dread b{color:var(--ink)}
+.dmore{margin-top:10px}
+.srow{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--line);font-size:12.5px}
+.srow .dot{width:9px;height:9px;border-radius:50%;background:var(--sc);flex:none}
+.srow .nm{flex:1 1 auto}
+.srow .v{color:var(--dim);font-variant-numeric:tabular-nums}
+
 @media (max-width:900px){
   #hero{grid-template-columns:1fr;gap:18px}
   .cols{grid-template-columns:1fr}
   #detail{position:static}
+  /* narrow screens: the three cards swipe sideways instead of stacking into a screenful */
+  .srcs{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;margin-right:calc(-1 * clamp(16px,2.5vw,48px));padding-right:clamp(16px,2.5vw,48px);padding-bottom:4px}
+  .src{flex:0 0 min(86%,380px);scroll-snap-align:start}
+}
+@media (max-width:700px){
+  .drow{grid-template-columns:minmax(0,1fr) 92px}
+  .drow .dn{grid-column:1/-1}
 }
 </style>
 <!-- Umami --><script>try{/[?&#]noumami\b/.test(location.href)&&localStorage.setItem('umami.disabled','1')}catch(e){}</script><script defer src="https://m.aguywithascarf.com/k.js" data-website-id="da7c4444-fe20-4f84-baaf-47d34355418b"></script>
@@ -242,6 +291,7 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
     <h1><small id="kicker"></small><span id="title"></span></h1>
     <div id="odds"></div>
   </div>
+  <section id="sources" aria-label="Forecast source"></section>
   <div id="called"></div>
 
   <h2 id="bandh2"></h2>
@@ -252,6 +302,8 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
   </div>
   <div class="legend" id="legend"></div>
   <div class="legend" id="legend2"></div>
+
+  <section id="diff"></section>
 
   <div class="cols">
     <div>
@@ -274,6 +326,7 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
   <p id="foot">
     Ratings, chances and control odds are civicAPI's own forecast
     (<a href="https://civicapi.org/forecasts" target="_blank" rel="noopener">civicapi.org/forecasts</a>);
+    the Kalshi and Fox News views are those two sources as civicAPI republishes them, a snapshot, not live prices;
     results and race calls come from civicAPI's live race feed. Seats not on this year's ballot are the
     holdovers from 2022 and 2024 (Senate) and from 2024 (governors). An independent or third-party
     win is drawn in gold. An independent fan project by <a href="https://dataviz.aguywithascarf.com/">A guy with a scarf</a> (Carlo De Marchis). The forecast and the results are saved as they change, and the <a href="scorecard/">scorecard</a> sets the last prediction against what happened.
@@ -316,7 +369,7 @@ const REHEARSAL = Q.has('rehearsal');
 const REPLAY = Q.has('replay');
 let LIVE = DEMO !== null || REHEARSAL || REPLAY || Date.now() >= LIVE_FROM;   // flips by itself when election day arrives, see boot
 
-const S = {ch:'house', view:'map', key:null, fc:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}, notes:{}, test:{}};
+const S = {ch:'house', view:'map', key:null, source:'civicapi', diffAll:false, fc:{}, civ:{}, alt:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}, notes:{}, test:{}};
 
 /* Two things civicAPI has done that the page must not pass on (found 2026-10-28):
    - a forecast that cannot be right (the 27 Oct Senate one: seat totals added up to 135 in a chamber
@@ -372,17 +425,70 @@ async function fromCache(kind) {
     const r = await fetch(`${CACHE}?k=${kind}`, {cache:'no-store'});
     if (!r.ok) throw new Error(r.status);
     const d = await r.json();
-    if (!d.house || !d.senate || !d.gov) throw new Error('incomplete');
+    if ((kind === 'sources' ? ['kalshi', 'foxnews'] : ['house', 'senate', 'gov']).some(n => !d[n])) throw new Error('incomplete');
     return d;
   } catch (e) { console.warn('cache', kind, String(e)); return null; }
 }
 async function pullForecasts() {
   const c = await fromCache('forecast');
-  if (c) { for (const k of Object.keys(CH)) S.fc[k] = await vetForecast(k, c[k]); S.src.fc = 'live'; return; }
-  await Promise.all(Object.entries(CH).map(async ([k, c]) => {
+  if (c) { for (const k of Object.keys(CH)) S.civ[k] = await vetForecast(k, c[k]); S.src.fc = 'live'; }
+  else await Promise.all(Object.entries(CH).map(async ([k, c]) => {
     const {data, live} = await getJSON(`${API}/forecast/${c.fc}/2026/civicapi`, `data/forecast-${k}.json`);
-    S.fc[k] = await vetForecast(k, data); S.src.fc = live ? 'live' : (S.src.fc || 'snapshot');
+    S.civ[k] = await vetForecast(k, data); S.src.fc = live ? 'live' : (S.src.fc || 'snapshot');
   }));
+  await pullSources();
+  applySource();
+}
+/* Kalshi and Fox News, read through civicAPI's per-source forecast route (cache, then civicAPI, then data/sources.json).
+   Each is turned into the same shape as civicAPI's forecast, with the names borrowed from it. A race the source does
+   not cover keeps rating null ("No rating"). */
+function buildAlt(src, k, raw) {
+  const states = {};
+  for (const [code, b] of Object.entries(S.civ[k].states)) {
+    const x = raw.states?.[code], p = x?.[1];
+    states[code] = {rating: x ? x[0] : null, democrat_pct: p ?? null, republican_pct: p == null ? null : +(100 - p).toFixed(1),
+      democratic: b.democratic, republican: b.republican, independent: b.independent, incumbent_party: b.incumbent_party};
+  }
+  return {pundit: SRC[src].name, last_updated: raw.last_updated, has_percentages: !!raw.has_percentages, states};
+}
+async function pullSources() {
+  let raw = await fromCache('sources');
+  if (!raw) {
+    try {
+      raw = {};
+      await Promise.all(['kalshi', 'foxnews'].flatMap(src => Object.entries(CH).map(async ([k, ch]) => {
+        const r = await fetch(`${API}/forecast/${ch.fc}/2026/${src}`, {cache: 'no-store'});
+        if (!r.ok) throw new Error(r.status);
+        const d = await r.json();
+        (raw[src] ||= {})[k] = {last_updated: d.last_updated, has_percentages: d.has_percentages,
+          states: Object.fromEntries(Object.entries(d.states || {}).map(([c, st]) => [c, [st.rating, st.democrat_pct ?? null]]))};
+      })));
+    } catch (e) { raw = null; }
+  }
+  if (!raw) { try { raw = await (await fetch('data/sources.json')).json(); } catch (e) { raw = null; } }
+  S.alt = {};
+  if (raw) for (const src of ['kalshi', 'foxnews']) {
+    S.alt[src] = {};
+    for (const k of Object.keys(CH)) if (raw[src]?.[k]) S.alt[src][k] = buildAlt(src, k, raw[src][k]);
+  }
+}
+/* S.fc is the forecast the page is drawn from: civicAPI's unless the viewer picked another source */
+function applySource() {
+  if (S.source !== 'civicapi' && !S.alt[S.source]) S.source = 'civicapi';
+  for (const k of Object.keys(CH)) S.fc[k] = (S.source !== 'civicapi' && S.alt[S.source][k]) || S.civ[k];
+}
+function readSource() {
+  let v = new URLSearchParams(location.search).get('source');
+  try { v = v || localStorage.getItem('midterms.source'); } catch (e) {}
+  if (SRC[v]) S.source = v;
+}
+function setSource(src) {
+  S.source = src; applySource();
+  try { localStorage.setItem('midterms.source', src); } catch (e) {}
+  const q = new URLSearchParams(location.search);
+  if (src === 'civicapi') q.delete('source'); else q.set('source', src);
+  history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
+  render();
 }
 async function ingestResults(k, data, live) {
   S.test[k] = !!data.test_data;
@@ -411,7 +517,7 @@ function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.im
 function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function demoize(ch, doc) {
   const out = {...doc, region_results:{}};
-  for (const [code, f] of Object.entries(S.fc[ch].states)) {
+  for (const [code, f] of Object.entries(S.civ[ch].states)) {   // always civicAPI's chances: Fox has none
     const key = code.toLowerCase(), r = rng(hash(key + ch)), base = doc.region_results[key] || {};
     const dWins = r() < f.democrat_pct / 100, when = r();
     let rep = 0, win = false;
@@ -430,8 +536,12 @@ function demoize(ch, doc) {
 
 /* ---------------------------------------------------------------- the model */
 const party = p => /democrat/i.test(p) ? 'D' : /republican/i.test(p) ? 'R' : 'O';
-const rankOf = r => { const i = RATINGS.indexOf(r); return i < 0 ? 4 : i; };
-const leanOf = rank => rank < 4 ? 'D' : rank > 4 ? 'R' : null;
+// rank 9 = "No rating": a race this source does not cover (Kalshi has no market on nine California seats)
+const LABELS = [...RATINGS, 'No rating'];
+const SRC = {civicapi: {name: 'civicAPI', letter: 'C'}, kalshi: {name: 'Kalshi', letter: 'K'}, foxnews: {name: 'Fox News', letter: 'F'}};
+const rankOf = r => { if (r == null) return 9; const i = RATINGS.indexOf(r); return i < 0 ? 4 : i; };
+const leanOf = rank => rank < 4 ? 'D' : rank > 4 && rank < 9 ? 'R' : null;
+const ratingText = f => f.rating || 'No rating';
 
 function result(ch, key) {
   const r = S.res[ch]?.region_results?.[key];
@@ -488,7 +598,7 @@ function render() {
   // control odds
   const mc = fc.monte_carlo || {}, pd = mc.prob_democrat_majority ?? null, pr = mc.prob_republican_majority ?? null;
   const rest = pd == null ? 0 : Math.max(0, 100 - pd - pr);
-  $('#odds').innerHTML = pd == null ? '' : `
+  $('#odds').innerHTML = pd == null ? (S.source === 'civicapi' ? '' : `<div class="lab">${esc(c.odds)}</div><div class="oddsfix" style="color:var(--dim)">${esc(SRC[S.source].name)} does not publish odds of control, only a ${S.source === 'kalshi' ? 'price' : 'rating'} for each race. The seat counts under the bar are added up from its races. civicAPI's odds are on the civicAPI view.</div>`) : `
     <div class="lab">${esc(c.odds)} · ${(mc.simulations || 0).toLocaleString()} simulations</div>
     <div class="oddsbar" role="img" aria-label="Democrats ${pd}%, Republicans ${pr}%">
       <div class="od" style="flex:${pd}">${pd >= 12 ? `D ${Math.round(pd)}%` : ''}</div>
@@ -517,7 +627,7 @@ function render() {
 
   // totals under the band
   const D = M.hold.D + M.seats.filter(s => s.rank < 4).length, T = M.seats.filter(s => s.rank === 4).length,
-        R = M.hold.R + M.seats.filter(s => s.rank > 4).length;
+        R = M.hold.R + M.seats.filter(s => s.rank > 4 && s.rank < 9).length;
   const ft = fc.totals || {};
   if (ft.democrat != null && (ft.democrat !== D || ft.republican !== R || ft.tossup !== T)) console.warn('band totals differ from forecast totals', {D, T, R}, ft);
   $('#bandend').innerHTML = `<span>Democratic<b>${D}</b>seats</span><span style="text-align:right">Republican<b>${R}</b>seats</span>`;
@@ -540,6 +650,8 @@ function render() {
   };
   if (M.hold.D) seg('<i class="hD"></i>', 'Not up', M.hold.D, M.hold.D);
   RATINGS.forEach((r, k) => seg(`<i class="r${k}"></i>`, r, counts[k], counts[k], k === 4));
+  const nNone = M.seats.filter(x => x.rank === 9).length;
+  if (nNone) seg('<i class="r9"></i>', 'No rating', nNone, nNone);
   if (M.hold.R) seg('<i class="hR"></i>', 'Not up', M.hold.R, M.hold.R);
   $('#legend').innerHTML = parts.join('');
   $('#bandend').insertAdjacentHTML('beforeend', tossup);
@@ -555,6 +667,8 @@ function render() {
   layoutLegend();
 
   renderCalled(ch, M);
+  renderSources(ch, M);
+  renderDiff(ch, M);
   renderTiles(ch, M);
   renderBlocks(ch, M);
   renderDetail();
@@ -572,7 +686,7 @@ function render() {
 function setMeta(n, v) { const m = document.querySelector(`meta[name="${n}"]`); if (m) m.setAttribute('content', v); }
 function updateSocialMeta() {
   const c = CH[S.ch], M = S.seats[S.ch], s = M && M.seats.find(x => x.key === S.key);
-  setMeta('agwas:title', s ? `${seatName(S.ch, s)} — ${s.f.rating} · US Midterms 2026` : `${c.title} — US Midterms 2026`);
+  setMeta('agwas:title', s ? `${seatName(S.ch, s)} — ${ratingText(s.f)} · US Midterms 2026` : `${c.title} — US Midterms 2026`);
   setMeta('agwas:tags', `midterms uspolitics dataviz ${S.ch === 'gov' ? 'governors' : S.ch}`);
 }
 
@@ -590,7 +704,7 @@ function layoutLegend() {
     return {e, w, c, d: c - w / 2};
   });
   // lefts for one row of items (in x order), or null if any would move further than MAXD
-  const place = list => {
+  const place = (list, force) => {
     const width = c => c.idx.reduce((a, j) => a + list[j].w, 0) + GAP * (c.idx.length - 1);
     const left = c => {
       let off = 0, sum = 0;
@@ -607,7 +721,7 @@ function layoutLegend() {
     }
     const out = [];
     for (const c of cl) { let x = left(c); for (const j of c.idx) { out[j] = x; x += list[j].w + GAP; } }
-    return out.every((x, k) => Math.abs(x - list[k].d) <= MAXD) ? out : null;
+    return force || out.every((x, k) => Math.abs(x - list[k].d) <= MAXD) ? out : null;
   };
   const rows = [];
   for (const it of its) {
@@ -615,11 +729,12 @@ function layoutLegend() {
     while (true) {
       rows[r] ||= [];
       if (place([...rows[r], it])) { rows[r].push(it); break; }
+      if (!rows[r].length) { rows[r].push(it); break; }   // a narrow stretch at the very edge (No rating): nowhere better to go
       r++;
     }
   }
   rows.forEach((list, r) => {
-    const lefts = place(list);
+    const lefts = place(list, true);
     list.forEach((it, k) => {
       it.e.style.left = lefts[k] + 'px'; it.e.style.top = (TOP + r * ROW) + 'px';
       const ln = it.e.querySelector('.ln');
@@ -691,15 +806,16 @@ function renderTiles(ch, M) {
   }).join('');
 }
 
-function chip(rank) { return `<span class="chip r${rank}">${RATINGS[rank]}</span>`; }
+function chip(rank) { return `<span class="chip r${rank}">${LABELS[rank]}</span>`; }
 const pct = v => (v == null ? '–' : (+v).toFixed(1).replace(/\.0$/, '') + '%');
 
 function renderDetail() {
   const el = $('#detail'), ch = S.ch, M = S.seats[ch], s = M.seats.find(x => x.key === S.key);
   if (!s) {
-    const watch = M.seats.slice().sort((a, b) => Math.abs(a.f.democrat_pct - a.f.republican_pct) - Math.abs(b.f.democrat_pct - b.f.republican_pct)).slice(0, 8);
+    const gap = x => x.f.democrat_pct == null ? Math.abs(x.rank - 4) * 30 : Math.abs(x.f.democrat_pct - x.f.republican_pct);
+    const watch = M.seats.filter(x => x.rank < 9).sort((a, b) => gap(a) - gap(b) || a.code.localeCompare(b.code)).slice(0, 8);
     el.innerHTML = `<h3>Races to watch</h3><div class="sub">Closest in the forecast. Click any square, bar or state for the matchup.</div>` +
-      watch.map(w => `<button class="watch" data-key="${w.key}">${esc(seatName(ch, w))}<small>${RATINGS[w.rank]} · ${esc(w.f.democratic || '?')} vs ${esc(w.f.republican || '?')}</small></button>`).join('');
+      watch.map(w => `<button class="watch" data-key="${w.key}">${esc(seatName(ch, w))}<small>${LABELS[w.rank]} · ${esc(w.f.democratic || '?')} vs ${esc(w.f.republican || '?')}</small></button>`).join('');
     return;
   }
   const f = s.f, r = result(ch, s.key);
@@ -714,18 +830,86 @@ function renderDetail() {
         <span class="v">${pct(c.percent)}<small>${(c.votes || 0).toLocaleString()}</small></span></div>`).join('') +
       `<div class="rptg">${r.rep}% reporting</div>`;
   }
-  html += `<h4>Forecast chance of winning</h4>` + rows.filter(x => x[1] || x[2] > 0).map(([p, name, v, col]) =>
+  // the same race through each source
+  const via = Object.keys(SRC).map(src => { const d = src === 'civicapi' ? S.civ[ch] : S.alt[src]?.[ch], x = d?.states[s.code]; return x ? {src, x} : null; }).filter(Boolean);
+  if (via.length > 1) html += `<h4>How the sources rate it</h4>` + via.map(({src, x}) => `<div class="srow sc-${src}"><span class="dot"></span><span class="nm">${SRC[src].name}</span>${chip(rankOf(x.rating))}<span class="v">${x.democrat_pct == null ? '' : pct(x.democrat_pct) + ' D'}</span></div>`).join('');
+  html += f.democrat_pct == null
+    ? `<h4>Chance of winning</h4><div class="rptg" style="text-align:left">${f.rating ? `${esc(SRC[S.source].name)} gives a rating only, not a percentage.` : `${esc(SRC[S.source].name)} has no market on this race.`}</div>`
+    : `<h4>${S.source === 'kalshi' ? 'Market price: chance of winning' : 'Forecast chance of winning'}</h4>` + rows.filter(x => x[1] || x[2] > 0).map(([p, name, v, col]) =>
     `<div class="cand"><span class="sw" style="background:${col}"></span><span class="nm">${esc(name || '–')}<small>${p}</small></span><span class="v">${pct(v)}</span></div>
      <div class="bar"><i style="width:${Math.min(100, v || 0)}%;background:${col}"></i></div>`).join('');
   html += `<div class="rptg"><button class="watch" style="border:0;padding:10px 0 0" data-key="">← Back to races to watch</button></div>`;
   el.innerHTML = html;
 }
 
+/* The three source cards: what each forecast IS (this is the point, not a footnote), this chamber's
+   seat count according to it, and the switch that redraws the page through it. */
+function sourceRead(doc, hold) {
+  let D = hold.D, R = hold.R, T = 0, N = 0;
+  for (const f of Object.values(doc.states)) { const k = rankOf(f.rating); if (k < 4) D++; else if (k === 4) T++; else if (k < 9) R++; else N++; }
+  return {D, T, R, N};
+}
+function renderSources(ch, M) {
+  const list = ['civicapi', ...['kalshi', 'foxnews'].filter(x => S.alt[x]?.[ch])];
+  const info = {
+    civicapi: ['A blend', 'Not a poll and not one forecaster: a model that blends expert ratings, betting markets, polls and fundraising into one chance for each race. Kalshi and Fox News are two of its inputs, so the three are not independent.',
+      'Published weights: expert ratings 20% · betting markets 20% · polls 20% · fundraising 10% · outside spending 10%'],
+    kalshi: ['A prediction market', "Traders buy and sell contracts on who wins each race, and the price is the market's chance. It is a prediction, not polling and not an expert's opinion: it moves with money and news.", ''],
+    foxnews: ['Network ratings', "Fox News's own Power Rankings: a rating from Safe to Tossup for each race, set by the network. A judgement, not a probability: no percentages, and no odds of control.", '']
+  };
+  $('#sources').innerHTML = `<div class="srcs" role="radiogroup" aria-label="Forecast source">` + list.map(src => {
+    const doc = src === 'civicapi' ? S.civ[ch] : S.alt[src][ch], r = sourceRead(doc, M.hold), on = S.source === src;
+    const asof = src === 'civicapi' ? '' : `civicAPI's copy of ${doc.last_updated ? shortDate(doc.last_updated) : '–'}${r.N ? ` · ${M.seats.length - r.N} of ${M.seats.length} races priced` : ''}`;
+    return `<button class="src ${on ? 'on' : ''}" data-src="${src}" role="radio" aria-checked="${on}">
+      <span class="top"><span class="dot"></span><b>${SRC[src].name}</b><span class="tag">${info[src][0]}</span></span>
+      <span class="read"><b>${r.D}</b> D · <b>${r.T}</b> Tossup · <b>${r.R}</b> R${r.N ? ` · ${r.N} unpriced` : ''}</span>
+      <span class="what">${info[src][1]}</span>
+      ${info[src][2] || asof ? `<span class="meta">${[info[src][2], asof].filter(Boolean).join('<br>')}</span>` : ''}
+      <span class="meta now">${on ? 'Showing this source on the page below' : 'Click to see the page through ' + SRC[src].name}</span></button>`;
+  }).join('') + '</div>';
+}
+
+/* Races where the sources are two or more steps apart on the nine-step scale. Three lanes per race (civicAPI,
+   Kalshi, Fox), one marker each on the same scale, a bar between the extremes. */
+function renderDiff(ch, M) {
+  const el = $('#diff'), kal = S.alt.kalshi?.[ch], fox = S.alt.foxnews?.[ch], civ = S.civ[ch];
+  if (!kal || !fox) { el.innerHTML = ''; return; }
+  const docs = [civ, kal, fox], ids = ['civicapi', 'kalshi', 'foxnews'];
+  let rated = 0;
+  const rows = [];
+  for (const code of Object.keys(civ.states)) {
+    const rk = docs.map(d => rankOf(d.states[code]?.rating));
+    if (rk.includes(9)) continue;
+    rated++;
+    const mn = Math.min(...rk), mx = Math.max(...rk);
+    if (mx - mn >= 2) rows.push({code, rk, mn, mx, spread: mx - mn, split: mn < 4 && mx > 4});
+  }
+  rows.sort((a, b) => b.spread - a.spread || b.split - a.split || Math.abs(a.rk[0] - 4) - Math.abs(b.rk[0] - 4) || a.code.localeCompare(b.code));
+  const splits = rows.filter(r => r.split).length, shown = S.diffAll ? rows : rows.slice(0, 8);
+  const most = side => { const n = [0, 0, 0]; for (const r of rows) { const e = side === 'D' ? r.mn : r.mx, h = r.rk.map((v, i) => v === e ? i : -1).filter(i => i >= 0); if (h.length === 1) n[h[0]]++; } return ids.map((id, i) => `${SRC[id].name} <b>${n[i]}</b>`).join(' · '); };
+  const what = ch === 'house' ? 'districts' : 'races';
+  const row = r => {
+    const f = civ.states[r.code], key = r.code.toLowerCase();
+    return `<button class="drow" data-key="${key}" aria-label="${esc(seatName(ch, {key, code: r.code}))}: ${ids.map((id, i) => SRC[id].name + ' ' + LABELS[r.rk[i]]).join(', ')}">
+      <span class="dn">${esc(seatName(ch, {key, code: r.code}))}<small>${esc(f.democratic || '?')} vs ${esc(f.republican || '?')}</small></span>
+      <span class="dscale">${RATINGS.map((_, k) => `<i class="cell r${k}"></i>`).join('')}<i class="span" style="left:${(r.mn + .5) / 9 * 100}%;width:${(r.mx - r.mn) / 9 * 100}%"></i>${
+        r.rk.map((v, i) => `<i class="mk sc-${ids[i]}" style="left:${(v + .5) / 9 * 100}%;top:${i * 14}px" title="${SRC[ids[i]].name}: ${LABELS[v]}"></i>`).join('')}</span>
+      <span class="dlab">${r.rk.map((v, i) => `<div class="sc-${ids[i]}"><b>${SRC[ids[i]].letter}</b>${LABELS[v]}</div>`).join('')}</span></button>`;
+  };
+  el.innerHTML = `<h2>Where the three sources disagree</h2>
+    <p class="dsub">${rows.length ? `Of ${rated} ${what} rated by all three, <b>${rows.length}</b> are two or more steps apart on the nine-step scale${splits ? `, and in <b>${splits}</b> of them the sources fall on opposite sides of Tossup` : ''}. Biggest gaps first; click one to open it.` : `Of ${rated} ${what} rated by all three, none is more than one step apart.`}</p>
+    ${rows.length ? `<div class="dkey">${ids.map(id => `<span class="sc-${id}"><i></i>${SRC[id].name}</span>`).join('')}<span>bar = the spread between them</span></div>
+    <div>${shown.map(row).join('')}</div>
+    ${rows.length > 8 ? `<button class="pill dmore" data-diffall="1">${S.diffAll ? 'Show fewer' : `Show all ${rows.length}`}</button>` : ''}
+    <p class="dread">Reads furthest toward Democrats in: ${most('D')}<br>Reads furthest toward Republicans in: ${most('R')}<br><span style="color:var(--faint)">Counts only races where one source is alone at the extreme.</span></p>` : ''}`;
+  markSel();
+}
+
 function renderTable(ch, M) {
   $('#tbody').innerHTML = M.seats.map(s => {
     const r = result(ch, s.key), f = s.f;
     let res = LIVE ? (r.st === 'called' ? `${r.win.name} ✓ ${pct(r.win.percent)}` : r.st === 'cnt' ? `Counting · ${r.rep}%` : '–') : (f.incumbent_party || '–');
-    return `<tr data-key="${s.key}"><td>${esc(seatName(ch, s))}</td><td><span class="chip r${s.rank}">${f.rating}</span></td>
+    return `<tr data-key="${s.key}"><td>${esc(seatName(ch, s))}</td><td><span class="chip r${s.rank}">${ratingText(f)}</span></td>
       <td>${esc(f.democratic || '–')}</td><td>${esc(f.republican || '–')}</td><td>${pct(f.democrat_pct)}</td><td>${esc(res)}</td></tr>`;
   }).join('');
 }
@@ -740,6 +924,7 @@ function renderStatus() {
   else if (LIVE) bits.push(`<b>live</b> · ${S.src.res === 'live' ? 'civicAPI' : 'cached snapshot'}`);
   else bits.push(days > 0 ? `<b>${days} day${days === 1 ? '' : 's'}</b> to election day` : 'Election day');
   if (!LIVE || DEMO !== null) bits.push(`forecast updated ${upd}${S.src.fc === 'live' ? '' : ' (cached)'}`);
+  if (S.source !== 'civicapi') bits.push(`showing <b>${SRC[S.source].name}</b>`);
   const testing = Object.values(S.test).some(Boolean);
   if (REPLAY) bits.push(`<b>replay</b> · saved test election${S.replayAt ? ', ' + fmtUTC(S.replayAt) : ''}`);
   else if (REHEARSAL) bits.push(testing ? '<b>rehearsal</b> · civicAPI test data, invented' : '<b>rehearsal</b> · civicAPI is not running test data right now');
@@ -759,6 +944,10 @@ function select(key) {
 document.addEventListener('click', e => {
   const v = e.target.closest('[data-view]');
   if (v) { S.view = v.dataset.view; try { localStorage.setItem('midterms.view', S.view); } catch (err) {} render(); return; }
+  const sc = e.target.closest('[data-src]');
+  if (sc) { setSource(sc.dataset.src); return; }
+  const dm = e.target.closest('[data-diffall]');
+  if (dm) { S.diffAll = !S.diffAll; renderDiff(S.ch, S.seats[S.ch]); return; }
   const p = e.target.closest('[data-ch]');
   if (p) { S.ch = p.dataset.ch; S.key = null; setHash(); render(); return; }
   const k = e.target.closest('[data-key]');
@@ -772,10 +961,10 @@ function tipHTML(el) {
   if (el.dataset.hold) return `<b>Not up in 2026</b><span class="m">${el.dataset.hold === 'D' ? 'Democratic' : 'Republican'} holdover</span>`;
   const s = M.seats.find(x => x.key === el.dataset.key); if (!s) return '';
   const r = result(ch, s.key), f = s.f;
-  let h = `<b>${esc(seatName(ch, s))}</b><span class="m">${f.rating} · ${esc(f.democratic || '?')} (D) vs ${esc(f.republican || '?')} (R)</span>`;
+  let h = `<b>${esc(seatName(ch, s))}</b><span class="m">${ratingText(f)} · ${esc(f.democratic || '?')} (D) vs ${esc(f.republican || '?')} (R)</span>`;
   if (r.st === 'called') h += `<br>✓ ${esc(r.win.name)} · ${pct(r.win.percent)}`;
   else if (r.st === 'cnt') h += `<br>Counting · ${r.rep}% in · ${esc(r.c[0]?.name || '')} ${pct(r.c[0]?.percent)}`;
-  else h += `<br><span class="m">Dem. chance ${pct(f.democrat_pct)}</span>`;
+  else h += `<br><span class="m">${f.democrat_pct == null ? 'Rating only, no percentage' : 'Dem. chance ' + pct(f.democrat_pct)}</span>`;
   return h;
 }
 document.addEventListener('mousemove', e => {
@@ -845,6 +1034,7 @@ async function startReplay() {
 
 (async () => {
   readView();
+  readSource();
   readHash();
   try {
     await pullForecasts();

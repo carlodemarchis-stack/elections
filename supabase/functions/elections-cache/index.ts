@@ -2,6 +2,9 @@
 //
 //   GET .../elections-cache?k=results   -> {ts, house, senate, gov}  (the 3 national race documents)
 //   GET .../elections-cache?k=forecast  -> {ts, house, senate, gov}  (the 3 civicAPI forecasts)
+//   GET .../elections-cache?k=sources   -> {ts, kalshi:{house,senate,gov}, foxnews:{...}}  (the same
+//                                           forecast route read as two other sources, slimmed to
+//                                           {last_updated, states:{CODE:[rating, democrat_pct|null]}})
 //
 // Without this, every open browser tab asks civicAPI itself every minute. With it, civicAPI sees
 // ONE set of three requests per TTL, however many people are watching.
@@ -17,7 +20,7 @@
 // which Postgres applies to exactly one of any number of concurrent callers. If civicAPI fails
 // the lock simply runs out, so a dead upstream is retried every LOCK_MS, not on every request.
 //
-// Safety: only the six fixed upstream URLs below are ever fetched (nothing from the request is
+// Safety: only the twelve fixed upstream URLs below are ever fetched (nothing from the request is
 // interpolated into one). The service-role key stays inside the function. Public by design
 // (verify_jwt = false): it serves only data civicAPI already publishes openly.
 
@@ -26,6 +29,17 @@ const SOURCES = {
   results: {
     ttl: 30_000,
     urls: { house: "race/87524", senate: "race/87528", gov: "race/87535" },
+  },
+  sources: {
+    ttl: 600_000,
+    urls: {
+      "kalshi:house": "forecast/house/2026/kalshi",
+      "kalshi:senate": "forecast/senate/2026/kalshi",
+      "kalshi:gov": "forecast/governor/2026/kalshi",
+      "foxnews:house": "forecast/house/2026/foxnews",
+      "foxnews:senate": "forecast/senate/2026/foxnews",
+      "foxnews:gov": "forecast/governor/2026/foxnews",
+    },
   },
   forecast: {
     ttl: 600_000,
@@ -73,6 +87,16 @@ function slimRace(doc: any) {
   };
 }
 
+// What the page reads from another source's forecast: each race's rating and Democratic chance
+// (null where the source publishes only a rating). Everything else is dropped.
+// deno-lint-ignore no-explicit-any
+function slimForecast(doc: any) {
+  const states: Record<string, [string, number | null]> = {};
+  // deno-lint-ignore no-explicit-any
+  for (const [k, s] of Object.entries(doc.states ?? {}) as [string, any][]) states[k] = [s.rating, s.democrat_pct ?? null];
+  return { last_updated: doc.last_updated, has_percentages: doc.has_percentages, states };
+}
+
 async function getJSON(path: string) {
   const r = await fetch(`${BASE}/${path}`, {
     headers: { "User-Agent": "agwas-elections-cache/1.0 (elections.aguywithascarf.com)" },
@@ -87,7 +111,10 @@ async function fetchUpstream(kind: Kind): Promise<string> {
   const docs = await Promise.all(Object.values(urls).map(getJSON));
   const out: Record<string, unknown> = { ts: Date.now() };
   Object.keys(urls).forEach((name, i) => {
-    out[name] = kind === "results" ? slimRace(docs[i]) : docs[i];
+    if (kind === "sources") {
+      const [src, chamber] = name.split(":");
+      ((out[src] ??= {}) as Record<string, unknown>)[chamber] = slimForecast(docs[i]);
+    } else out[name] = kind === "results" ? slimRace(docs[i]) : docs[i];
   });
   return JSON.stringify(out);
 }
@@ -150,7 +177,7 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "GET") return new Response("method not allowed", { status: 405, headers: CORS });
 
   const kind = (new URL(req.url).searchParams.get("k") ?? "results") as Kind;
-  if (!(kind in SOURCES)) return new Response('k must be "results" or "forecast"', { status: 400, headers: CORS });
+  if (!(kind in SOURCES)) return new Response('k must be "results", "forecast" or "sources"', { status: 400, headers: CORS });
 
   let row: Row | null = null;
   try {

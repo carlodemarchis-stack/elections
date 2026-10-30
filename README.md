@@ -85,6 +85,26 @@ to `archive/` only when something changed:
 - Run it by hand: `python3 tools/archive.py` (or `forecast` / `results`). It needs no key.
 - The percentages are read as chances of winning (unconfirmed with civicAPI).
 
+## Three sources: civicAPI, Kalshi, Fox News (added 2026-10-30)
+
+civicAPI's forecast route takes any source in place of `civicapi`:
+`/v2/forecast/{house,senate,governor}/2026/{source}`. There are 20 (expert ratings with no percentages:
+cook, sabato, foxnews, insideelections, ...; market prices as win %: kalshi, polymarket, predictit). The page uses three:
+
+- **Source cards** under the title say what each one IS (a blend / a prediction market / network ratings) and are
+  the switch: `S.fc` is the forecast the page is drawn from, so choosing a source redraws everything. `?source=kalshi`
+  or `foxnews` deep-links it and the choice is kept in localStorage. Kalshi has no market on 9 California House
+  seats: they are rank 9, "No rating" (hatched), never silently counted as Tossups. Fox has no percentages, so the
+  race panel says so instead of drawing a bar, and odds of control exist only on the civicAPI view.
+- **Where the three sources disagree**: races two or more steps apart on the shared nine-step scale (the only
+  common currency), three lanes per race, ranked by the gap, plus who reads furthest toward each party.
+- **Data**: a third cache feed `?k=sources` (Supabase `elections-cache`, 12 fixed URLs now, TTL 10 min, slimmed to
+  `{last_updated, states:{CODE:[rating, democrat_pct|null]}}`, about 24 KB), then civicAPI directly, then
+  `data/sources.json` (written by `tools/fetch.py`). Row `sources` was added to `public.elections_cache`
+  (migration appended). The copies are dated by civicAPI (27 Oct), not live prices.
+- Every Senate `totals` field, in every source, carries the +35 holdover bug (see below), so seat counts are always
+  added up from the races, never read from `totals`.
+
 ## civicAPI test elections, broken forecasts, and the dress rehearsal (found 2026-10-28)
 
 Eight days out, civicAPI started running **test elections**: the race documents carry `test_data: true`,
