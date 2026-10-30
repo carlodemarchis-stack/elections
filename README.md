@@ -73,6 +73,9 @@ to `archive/` only when something changed:
   range), stamped with when WE looked, civicAPI's own date beside it, and a content hash so a quiet
   hour saves nothing. The index also carries each snapshot's chance of control, which is the
   "how the prediction moved" table.
+- `archive/sources/<stamp>.json` + `index.json`: Kalshi and Fox News for every race (`[rating, democrat_pct|null]`), saved on
+  the same rhythm and only when something changed, so market prices before election day are on record and can be
+  scored against civicAPI's blend later. Not wired into the scorecard yet.
 - `archive/results/<stamp>.json` + `latest.json` + `index.json`: per seat, the called party, reporting %
   and the D and R votes, plus the holdover seats.
 - **The prediction** = the last forecast saved at or before `LOCK` (3 Nov 10:00 UTC, the same moment the

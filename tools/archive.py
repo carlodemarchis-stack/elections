@@ -4,12 +4,15 @@
     python3 tools/archive.py              # forecast and results
     python3 tools/archive.py forecast     # just the forecast
     python3 tools/archive.py results      # just the results
+    python3 tools/archive.py sources      # just Kalshi and Fox News
 
 Run by .github/workflows/archive.yml (hourly, every 15 minutes in election week). Standard
 library only. The scorecard page (scorecard/) compares what is saved here.
 
     archive/forecast/index.json            one line per saved forecast: when, civicAPI's date, the odds
     archive/forecast/<stamp>.json          the whole forecast, every seat, compact
+    archive/sources/<stamp>.json           Kalshi and Fox News, every race: [rating, democrat_pct|null]
+    archive/sources/index.json             one line per saved copy: when, civicAPI's date for each source
     archive/results/index.json             one line per saved result set: when, how many races called
     archive/results/<stamp>.json           every seat: called party, reporting %, D and R votes
     archive/results/latest.json            a copy of the newest result set (fallback for the page)
@@ -113,6 +116,36 @@ def archive_forecast():
     return True
 
 
+# ----------------------------------------------------------------- other sources
+# Kalshi (market prices) and Fox News (ratings only) come through the same forecast route as civicAPI's own.
+# Prices before election day cannot be recovered later, so they are saved on the same hourly rhythm and the
+# scorecard can set them against civicAPI's blend. Same rule: a copy is written only if its content changed.
+SOURCES = ("kalshi", "foxnews")
+
+
+def compact_source(f):
+    return {"last_updated": f.get("last_updated"), "has_percentages": f.get("has_percentages"),
+            "seats": {k: [s.get("rating"), s.get("democrat_pct")] for k, s in f["states"].items()}}
+
+
+def archive_sources():
+    slug = {"house": "house", "senate": "senate", "gov": "governor"}
+    sources = {src: {k: compact_source(get(f"forecast/{slug[k]}/2026/{src}")) for k in CHAMBERS} for src in SOURCES}
+    h = digest(sources)
+    d = ROOT / "sources"
+    idx = load_index(d / "index.json")
+    if idx["snapshots"] and idx["snapshots"][-1]["hash"] == h:
+        print("sources: unchanged (" + ", ".join(f"{s} dated {sources[s]['house']['last_updated']}" for s in SOURCES) + ")")
+        return False
+    name, observed = stamp()
+    write(d / f"{name}.json", {"observed": observed, "hash": h, "sources": sources})
+    idx["snapshots"].append({"file": f"{name}.json", "observed": observed, "hash": h,
+                             "updated": {s: sources[s]["house"]["last_updated"] for s in SOURCES}})
+    write(d / "index.json", idx)
+    print(f"sources: SAVED {name}.json (" + ", ".join(f"{s} {sum(len(c['seats']) for c in sources[s].values())} races" for s in SOURCES) + ")")
+    return True
+
+
 # ----------------------------------------------------------------- results
 def compact_race(doc):
     seats = {}
@@ -172,3 +205,5 @@ if __name__ == "__main__":
         archive_forecast()
     if what in ("all", "results"):
         archive_results()
+    if what in ("all", "sources"):
+        archive_sources()
