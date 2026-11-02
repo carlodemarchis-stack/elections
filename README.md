@@ -76,6 +76,7 @@ to `archive/` only when something changed:
 - `archive/sources/<stamp>.json` + `index.json`: Kalshi and Fox News for every race (`[rating, democrat_pct|null]`), saved on
   the same rhythm and only when something changed, so market prices before election day are on record and can be
   scored against civicAPI's blend later. Not wired into the scorecard yet.
+- `archive/baseline/`: the pre-election predictions frozen on 2026-11-02 (23:15 UTC) by `tools/freeze_baseline.py`: the three civicAPI forecasts, Kalshi and Fox News, the archived snapshots the scorecard mixes for the Senate, and a `MANIFEST.json` with sha256s. Nothing reads it; it is the untouchable record to compare with `archive/results/`. The script refuses to overwrite without `--force`.
 - `archive/results/<stamp>.json` + `latest.json` + `index.json`: per seat, the called party, reporting %
   and the D and R votes, plus the holdover seats.
 - **The prediction** = the last forecast saved at or before `LOCK` (3 Nov 10:00 UTC, the same moment the
