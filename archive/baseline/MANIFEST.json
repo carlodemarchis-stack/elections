@@ -1,33 +1,34 @@
 {
- "frozen": "2026-11-02T23:15:19Z",
+ "frozen": "2026-11-03T07:07:50Z",
  "what": "pre-election predictions, frozen before any result; compare against archive/results",
  "notes": [
-  "Senate: civicAPI's 2026-10-27 forecast was published broken (seat totals add to 135, both parties 100% control). Its race ratings and percentages are sound and are what the page and scorecard use; the odds come from the 2026-10-20 copy (data/forecast-senate.json, forecast-2026-10-25T1657Z.json).",
-  "Kalshi and Fox News are civicAPI's republished copies, dated 2026-10-27, not live prices. Fox publishes ratings only."
+  "Senate: civicAPI published its forecasts of 2026-10-27, 2026-11-03 broken (seat totals do not add to 100, both parties 100% control). Their race ratings and percentages are sound and are what the page and scorecard use; the odds come from the last sane copy (data/forecast-senate.json, 2026-10-25T1657Z.json).",
+  "Kalshi and Fox News are civicAPI's republished copies (kalshi 2026-11-03, foxnews 2026-11-03), not live prices. Fox publishes ratings only."
  ],
  "files": {
-  "forecast-house.json": "2c703d006eb4db580ac8dd2c59f36f121c71f6d6de055e95d7ec58025af517bc",
+  "forecast-house.json": "17c5e2c9d4c09f42329b1dd12a3b81a28c873534b861ced3fe2ff0fca9224b4f",
   "forecast-senate.json": "a588294c6ad39b10e2ffb3493e014f75b0f60f393ba24d6acd518da81ab8daea",
-  "forecast-gov.json": "aede65c5b58b18856421ec7218da6d0824be9e423b2f2a0b0fbb774af716e17b",
-  "sources.json": "3df5ffbc968b148407949dcc6e6eadc0eb90545aad510c47a6730e2237188185",
+  "forecast-gov.json": "0470b64677c949d9960b0358db66051e3343c9862b2bbc9b97b5f678b1cd2f68",
+  "sources.json": "c48a71508f69b355bba43d18249c323bca1a7a05aa401a845aae8f3f5156a18d",
   "forecast-2026-10-25T1657Z.json": "878ee8ab025dffc34397bc102665fb900fe7b8b97927ec8fe18c161703141085",
   "forecast-2026-10-27T2123Z.json": "5c83a8bd6bad5000711e5ad11cc3a55a8688ddcba11c3e95cbb36dab9121cd66",
-  "sources-2026-10-30T2210Z.json": "9053c6a01383ad9cb0f28c548a0d04eb48a63347b647d46f61fa8cb69ffebaf4"
+  "forecast-2026-11-03T0329Z.json": "219df0b334956a8201e8f0a4665d7f978835fd2be044695c4f7b5106c9a2f637",
+  "sources-2026-11-03T0329Z.json": "42e00bbb2a5fc1e205669918645d0ad34065387ad0d3e457a57bf22894ffc0ee"
  },
  "dates": {
-  "forecast-house.json": "2026-10-27",
+  "forecast-house.json": "2026-11-03",
   "forecast-senate.json": "2026-10-20",
-  "forecast-gov.json": "2026-10-27",
+  "forecast-gov.json": "2026-11-03",
   "sources.json": {
    "kalshi": {
-    "house": "2026-10-27",
-    "senate": "2026-10-27",
-    "gov": "2026-10-27"
+    "house": "2026-11-03",
+    "senate": "2026-11-03",
+    "gov": "2026-11-03"
    },
    "foxnews": {
-    "house": "2026-10-27",
-    "senate": "2026-10-27",
-    "gov": "2026-10-27"
+    "house": "2026-11-03",
+    "senate": "2026-11-03",
+    "gov": "2026-11-03"
    }
   },
   "forecast-2026-10-25T1657Z.json": {
@@ -42,11 +43,18 @@
     "senate": "seat totals add up to 135 in a chamber of 100"
    }
   },
-  "sources-2026-10-30T2210Z.json": {
-   "observed": "2026-10-30T22:10:53Z",
+  "forecast-2026-11-03T0329Z.json": {
+   "observed": "2026-11-03T03:29:41Z",
+   "civicapi_date": "2026-11-03",
+   "problems": {
+    "senate": "seat totals add up to 126 in a chamber of 100"
+   }
+  },
+  "sources-2026-11-03T0329Z.json": {
+   "observed": "2026-11-03T03:29:43Z",
    "civicapi_date": {
-    "kalshi": "2026-10-27",
-    "foxnews": "2026-10-27"
+    "kalshi": "2026-11-03",
+    "foxnews": "2026-11-03"
    }
   }
  }

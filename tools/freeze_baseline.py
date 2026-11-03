@@ -53,7 +53,10 @@ def main():
         shutil.copy2(src, dst)
         files[dst.name] = sha(dst)
         dates[dst.name] = {"observed": sn["observed"], "civicapi_date": sn["updated"], "problems": sn.get("problems")}
-    sn = last("sources/index.json")
+    snaps = json.loads((ROOT / "archive" / "forecast" / "index.json").read_text())["snapshots"]
+    broken = [x for x in snaps if (x.get("problems") or {}).get("senate")]
+    sane = [x for x in snaps if not (x.get("problems") or {}).get("senate")]
+    sn = sn_src = last("sources/index.json")
     src = ROOT / "archive" / "sources" / sn["file"]
     dst = OUT / f"sources-{sn['file']}"
     shutil.copy2(src, dst)
@@ -64,10 +67,10 @@ def main():
         "frozen": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "what": "pre-election predictions, frozen before any result; compare against archive/results",
         "notes": [
-            "Senate: civicAPI's 2026-10-27 forecast was published broken (seat totals add to 135, both parties 100% control). "
-            "Its race ratings and percentages are sound and are what the page and scorecard use; the odds come from the 2026-10-20 copy "
-            "(data/forecast-senate.json, forecast-2026-10-25T1657Z.json).",
-            "Kalshi and Fox News are civicAPI's republished copies, dated 2026-10-27, not live prices. Fox publishes ratings only.",
+            "Senate: civicAPI published its forecasts of " + ", ".join(sorted({sn["updated"] for sn in broken})) + " broken (seat totals do not add to 100, "
+            "both parties 100% control). Their race ratings and percentages are sound and are what the page and scorecard use; the odds "
+            "come from the last sane copy (data/forecast-senate.json, " + (sane[-1]["file"] if sane else "none") + ").",
+            "Kalshi and Fox News are civicAPI's republished copies (" + ", ".join(f"{k} {v}" for k, v in sn_src["updated"].items()) + "), not live prices. Fox publishes ratings only.",
         ],
         "files": files,
         "dates": dates,
