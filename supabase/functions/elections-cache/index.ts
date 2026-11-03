@@ -19,6 +19,7 @@
 // The lock is one conditional UPDATE (lock_until_ms in the past AND ts_ms older than the TTL),
 // which Postgres applies to exactly one of any number of concurrent callers. If civicAPI fails
 // the lock simply runs out, so a dead upstream is retried every LOCK_MS, not on every request.
+// Each of the documents is refreshed independently: one that fails keeps its previously stored copy.
 //
 // Safety: only the twelve fixed upstream URLs below are ever fetched (nothing from the request is
 // interpolated into one). The service-role key stays inside the function. Public by design
@@ -106,16 +107,32 @@ async function getJSON(path: string) {
   return r.json();
 }
 
-async function fetchUpstream(kind: Kind): Promise<string> {
+// Each document is fetched on its own: one that fails (civicAPI 502s and timeouts under load) keeps
+// the copy from the last stored body, so a bad Senate call no longer holds back fresh House numbers.
+// If a failed document has no earlier copy, or every one failed, the whole refresh fails as before.
+async function fetchUpstream(kind: Kind, prevBody: string | null): Promise<string> {
   const urls = SOURCES[kind].urls;
-  const docs = await Promise.all(Object.values(urls).map(getJSON));
+  const names = Object.keys(urls);
+  const docs = await Promise.allSettled(Object.values(urls).map(getJSON));
+  const prev = prevBody ? JSON.parse(prevBody) : null;
   const out: Record<string, unknown> = { ts: Date.now() };
-  Object.keys(urls).forEach((name, i) => {
-    if (kind === "sources") {
-      const [src, chamber] = name.split(":");
-      ((out[src] ??= {}) as Record<string, unknown>)[chamber] = slimForecast(docs[i]);
-    } else out[name] = kind === "results" ? slimRace(docs[i]) : docs[i];
+  let ok = 0;
+  names.forEach((name, i) => {
+    const d = docs[i];
+    const [src, chamber] = name.split(":");
+    if (d.status === "fulfilled") {
+      ok++;
+      if (kind === "sources") ((out[src] ??= {}) as Record<string, unknown>)[chamber] = slimForecast(d.value);
+      else out[name] = kind === "results" ? slimRace(d.value) : d.value;
+      return;
+    }
+    const old = kind === "sources" ? prev?.[src]?.[chamber] : prev?.[name];
+    if (old === undefined) throw d.reason;
+    console.error("elections-cache kept previous", kind, name, String(d.reason));
+    if (kind === "sources") ((out[src] ??= {}) as Record<string, unknown>)[chamber] = old;
+    else out[name] = old;
   });
+  if (!ok) throw new Error(`${kind}: every upstream document failed`);
   return JSON.stringify(out);
 }
 
@@ -186,7 +203,7 @@ Deno.serve(async (req: Request) => {
     if (row?.body && now - row.ts_ms <= SOURCES[kind].ttl) return reply(kind, row.body, row.ts_ms, "hit");
 
     if (await tryLock(kind, now)) {
-      const body = await fetchUpstream(kind);
+      const body = await fetchUpstream(kind, row?.body ?? null);
       await writeRow(kind, body);
       return reply(kind, body, Date.now(), "miss");
     }
@@ -199,7 +216,7 @@ Deno.serve(async (req: Request) => {
 
   // Nothing stored yet (first ever request) and no lock: go to civicAPI directly, store nothing.
   try {
-    return reply(kind, await fetchUpstream(kind), Date.now(), "direct");
+    return reply(kind, await fetchUpstream(kind, null), Date.now(), "direct");
   } catch (e) {
     console.error("elections-cache direct", kind, String(e));
     return new Response("upstream unavailable", { status: 502, headers: CORS });
