@@ -72,6 +72,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .banner b{color:var(--ink)}
 .banner.warn{border-color:#e0b84a}
 .note{font-size:13px;color:var(--faint);max-width:760px}
+.sdot{display:inline-block;width:9px;height:9px;border-radius:99px;margin-right:6px;background:var(--sc)}
+.tile.src{border-top:3px solid var(--sc)}
+.tile .sub b{color:var(--ink)}
+.mk{font-weight:700;margin-left:4px}
+.mk.y{color:var(--good)} .mk.n{color:var(--bad)} .mk.z{color:var(--faint)}
+details.more summary{cursor:pointer;color:var(--dim);font-size:13px;margin:8px 0}
 #foot{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--faint);line-height:1.7}
 #foot a{color:var(--dim)}
 </style>
@@ -91,6 +97,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   <div id="foot">
     <p>How it is scored. The forecast gives each race a chance for each party; where an independent can win, they get a share too. A race counts as <b>called the right way</b> if the party with the highest chance won. The <b>Brier score</b> measures the percentages themselves: for each race it adds up the squared gap between the forecast chance and what happened (1 for the winner, 0 for the others), then averages. Zero is perfect, and a 50/50 guess between two parties scores 0.5. A good forecast is also <b>calibrated</b>: of the races it gave a 90% chance, about nine in ten should go that way.</p>
     <p>The forecast is civicAPI's, saved by us; the calls come from civicAPI too. The chance a forecast gives each party is treated as a chance of winning, which fits its numbers but has not been confirmed with civicAPI. A call can change after a recount, and this page follows the latest results. <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a> · <a href="https://dataviz.aguywithascarf.com/">A guy with a scarf</a> · <a href="https://github.com/carlodemarchis-stack/elections/tree/main/archive" target="_blank" rel="noopener">every saved snapshot</a></p>
+    <p>Comparing the three sources. Each is read through its nine-step rating, the one thing all three publish. A rating that leans toward a party is a call; a Tossup is no call and is not counted as a miss. A call is right if that party won (an independent winner makes every D or R call wrong). The source whose rating leaned furthest toward the winner was closest; a Tossup beats a wrong side. The Brier score uses each source's chance of a Democratic win, counts only races called and rated by all three, leaves out races an independent won, and is not computed for Fox News, which publishes no odds. Kalshi and Fox News come to us through civicAPI as snapshots, not live prices, and Kalshi does not cover every House race. "Alone and right" means it leaned to the winner and the other two did not.</p>
     <p><a href="https://dataviz.aguywithascarf.com/releases/#midterms">Release notes</a> <a class="agwas-ver" data-agwas-ver="midterms" href="https://dataviz.aguywithascarf.com/releases/#midterms"></a></p>
   </div>
 </main>
@@ -248,6 +255,84 @@ function chamberHTML([k, title, need], fcCh, resCh) {
   return html;
 }
 
+/* ---- three forecasts against the result: civicAPI, Kalshi, Fox News
+   Every source is read through its nine-step rating, the one thing they all publish. A rating leans toward a party
+   (Safe D ... Safe R) or is a Tossup, which is no call. "Lean" is how many steps toward the winner it was:
+   +4 Safe for the winner, 0 Tossup, -4 Safe for the loser. Closer to the result = a higher lean. */
+const SRCS = [['civicapi', 'civicAPI'], ['kalshi', 'Kalshi'], ['foxnews', 'Fox News']];
+const SCOL = {civicapi: '#e8ecf5', kalshi: '#4fd1c5', foxnews: '#f5b942'};
+const leanTo = (rating, a) => { const i = RATINGS.indexOf(rating); if (i < 0) return null; return a === 'O' ? -Math.abs(4 - i) : a === 'D' ? 4 - i : i - 4; };
+
+function compareRows(k, fcCh, resCh, alt) {
+  const rows = [];
+  for (const [code, s] of Object.entries(fcCh.seats)) {
+    const r = resCh.seats[code.toLowerCase()];
+    if (!r || !r[0]) continue;
+    const a = r[0], src = {civicapi: {rating: s[0], pd: s[1] == null ? null : s[1] / 100}};
+    for (const id of ['kalshi', 'foxnews']) { const x = alt?.[id]?.[k]?.seats?.[code]; if (x) src[id] = {rating: x[0], pd: x[1] == null ? null : x[1] / 100}; }
+    for (const v of Object.values(src)) v.lean = leanTo(v.rating, a);
+    rows.push({k, code, a, winner: r[4], dn: s[5], rn: s[6], iname: s[7], src, all: SRCS.every(([id]) => src[id] && src[id].lean != null)});
+  }
+  return rows;
+}
+
+function compareStats(rows) {
+  const common = rows.filter(r => r.all), out = {n: rows.length, common: common.length};
+  for (const [id] of SRCS) {
+    const rated = rows.filter(r => r.src[id] && r.src[id].lean != null), calls = rated.filter(r => r.src[id].lean !== 0);
+    const priced = common.filter(r => r.a !== 'O' && r.src[id].pd != null);
+    const e = out[id] = {rated: rated.length, calls: calls.length, right: calls.filter(r => r.src[id].lean > 0).length, tossups: rated.length - calls.length,
+      brier: priced.length ? priced.reduce((t, r) => t + 2 * Math.pow(r.src[id].pd - (r.a === 'D' ? 1 : 0), 2), 0) / priced.length : null,
+      closest: 0, tied: 0, aloneRight: 0, aloneWrong: 0};
+    for (const r of common) {
+      const mine = r.src[id].lean, others = SRCS.filter(([o]) => o !== id).map(([o]) => r.src[o].lean), best = Math.max(mine, ...others);
+      if (mine === best) { if (others.every(x => x === mine)) {} else if (others.some(x => x === mine)) e.tied++; else e.closest++; }
+      if (mine > 0 && others.every(x => x <= 0)) e.aloneRight++;
+      if (mine < 0 && others.every(x => x >= 0)) e.aloneWrong++;
+    }
+  }
+  return out;
+}
+
+function compareTilesHTML(st) {
+  return `<div class="tiles">` + SRCS.map(([id, name]) => {
+    const e = st[id];
+    if (!e.rated) return `<div class="tile src" style="--sc:${SCOL[id]}"><div class="k"><i class="sdot"></i>${name}</div><div class="big">–</div><div class="sub">No rated race has been called yet</div></div>`;
+    return `<div class="tile src" style="--sc:${SCOL[id]}"><div class="k"><i class="sdot"></i>${name}</div>
+      <div class="big">${e.right} <span style="font-size:18px;color:var(--dim)">of ${e.calls} calls</span></div>
+      <div class="sub"><b>${e.calls ? pct(e.right / e.calls * 100) : '–'}</b> right when it took a side · ${e.tossups} rated Tossup<br>
+      ${e.brier == null ? 'No odds published, so no Brier score' : `Brier <b>${e.brier.toFixed(3)}</b> (lower is better)`}<br>
+      Closest alone in <b>${e.closest}</b> · tied with one other in ${e.tied}<br>
+      Alone and right <b class="good">${e.aloneRight}</b> · alone and wrong <b class="bad">${e.aloneWrong}</b></div></div>`;
+  }).join('') + `</div>`;
+}
+
+const mark = l => l == null ? '' : l > 0 ? '<span class="mk y" title="leaned to the winner">✓</span>' : l < 0 ? '<span class="mk n" title="leaned to the loser">✗</span>' : '<span class="mk z" title="Tossup: no call">–</span>';
+const ratingCell = v => v ? `<td><span class="chip r${RATINGS.indexOf(v.rating)}">${esc(v.rating)}</span>${mark(v.lean)}</td>` : '<td class="dim">not rated</td>';
+
+function disagreementHTML(rows, k) {
+  const common = rows.filter(r => r.all).map(r => {
+    const l = SRCS.map(([id]) => r.src[id].lean), best = Math.max(...l);
+    return {r, spread: best - Math.min(...l), best, closest: SRCS.filter(([id]) => r.src[id].lean === best).map(([, n]) => n)};
+  });
+  const split = common.filter(x => x.spread >= 2).sort((x, y) => y.spread - x.spread || x.r.code.localeCompare(y.r.code));
+  const tr = x => {
+    const r = x.r, win = r.winner || (r.a === 'D' ? r.dn : r.a === 'R' ? r.rn : r.iname);
+    return `<tr><td><a href="../#${k}/${r.code.toLowerCase()}">${esc(r.code)}</a></td>${SRCS.map(([id]) => ratingCell(r.src[id])).join('')}
+      <td><span class="dp ${r.a}"></span>${esc(win || r.a)}</td><td>${x.closest.length === 3 ? '<span class="dim">tie</span>' : esc(x.closest.join(' + '))}</td></tr>`;
+  };
+  const head = `<thead><tr><th>Race</th><th>civicAPI</th><th>Kalshi</th><th>Fox News</th><th>Winner</th><th>Closest</th></tr></thead>`;
+  let html = '';
+  if (split.length) {
+    html += `<h3>Where they disagreed: who was right (${split.length} called of ${common.length} rated by all three)</h3>
+      <div class="tblwrap"><table>${head}<tbody>${split.slice(0, 10).map(tr).join('')}</tbody></table></div>`;
+    if (split.length > 10) html += `<details class="more"><summary>Show the other ${split.length - 10}</summary><div class="tblwrap"><table>${head}<tbody>${split.slice(10).map(tr).join('')}</tbody></table></div></details>`;
+  } else if (common.length) html += `<p class="note">No called race had the three sources two or more steps apart.</p>`;
+  const nobody = common.filter(x => x.best <= 0 && Math.min(...SRCS.map(([id]) => x.r.src[id].lean)) < 0).sort((x, y) => x.best - y.best);
+  if (nobody.length) html += `<h3>Nobody had the winner (${nobody.length})</h3><div class="tblwrap"><table>${head}<tbody>${nobody.slice(0, 8).map(tr).join('')}</tbody></table></div>`;
+  return html;
+}
+
 /* the last forecast saved before polls opened that passes the checks, chamber by chamber */
 async function pickForecast(idx) {
   const eligible = idx.snapshots.filter(s => Date.parse(s.observed) <= LOCK);
@@ -291,6 +376,14 @@ function movementHTML(idx, usedFiles) {
     const usedFiles = new Set(CH.flatMap(([k]) => [pick.chosen[k].snap.file, pick.rejected[k]?.oddsSnap?.file].filter(Boolean)));
     const locked = Date.now() >= LOCK;
 
+    // Kalshi and Fox News: the last copy saved before polls opened, like the forecast above
+    let alt = null, altSnap = null;
+    try {
+      const sidx = await getJSON(ARCHIVE + 'sources/index.json'), el = sidx.snapshots.filter(x => Date.parse(x.observed) <= LOCK);
+      altSnap = el.length ? el[el.length - 1] : sidx.snapshots[0];
+      alt = (await getJSON(ARCHIVE + 'sources/' + altSnap.file)).sources;
+    } catch (e) { console.warn('no saved Kalshi / Fox copy', e); }
+
     let res, source, testIgnored = false;
     const archived = await getJSON(ARCHIVE + 'results/latest.json').catch(() => null);
     try {
@@ -331,7 +424,16 @@ function movementHTML(idx, usedFiles) {
     if (testIgnored) html += `<div class="banner warn"><b>civicAPI is running a test election right now.</b> Its invented results are ignored here, so nothing below is scored until real races are called. To see the scoring run on the test election anyway, open this page with <a href="?rehearsal">?rehearsal</a>.</div>`;
     if (REHEARSAL) html += `<div class="banner warn"><b>Rehearsal:</b> these are civicAPI's test results, invented, scored against the real prediction. They are not real results.</div>`;
     if (DEMO !== null) html += `<div class="banner warn"><b>Demo:</b> these results are invented from the forecast's own chances, to show how the scoring reads. They are not real.</div>`;
-    for (const c of CH) html += chamberHTML(c, fc.chambers[c[0]], res.chambers[c[0]]);
+    const cmp = alt ? Object.fromEntries(CH.map(([k]) => [k, compareRows(k, fc.chambers[k], res.chambers[k], alt)])) : null;
+    if (cmp && Object.values(cmp).some(r => r.length)) {
+      const st = compareStats(Object.values(cmp).flat());
+      html += `<h2><small>Three forecasts</small>civicAPI, Kalshi and Fox News against the result</h2>
+        <p class="dim">All called races together (${st.n}); ${st.common} of them were rated by all three, which is what the comparisons between them use. Saved ${when(altSnap.observed)}.</p>` + compareTilesHTML(st);
+    }
+    for (const c of CH) {
+      html += chamberHTML(c, fc.chambers[c[0]], res.chambers[c[0]]);
+      if (cmp && cmp[c[0]].length) html += `<h3>The three sources in the ${esc(c[3])}</h3>` + compareTilesHTML(compareStats(cmp[c[0]])) + disagreementHTML(cmp[c[0]], c[0]);
+    }
     html += movementHTML(idx, usedFiles);
     app.innerHTML = html;
   } catch (e) {
