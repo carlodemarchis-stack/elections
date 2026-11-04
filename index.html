@@ -235,6 +235,14 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .watch{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:8px 0;cursor:pointer;font-size:13px;color:var(--ink)}
 .watch small{display:block;color:var(--dim);font-size:11px}
 .watch:hover{background:var(--pan2)}
+.watch.st-called{background:var(--calD);color:#fff;padding:8px 10px;margin-top:3px;border-radius:4px;border-top:0}
+.watch.st-called.cR{background:var(--calR)}
+.watch.st-called.cO{background:var(--calO);color:#1a1405}
+.watch.st-called small{color:rgba(255,255,255,.88)}
+.watch.st-called.cO small{color:rgba(26,20,5,.8)}
+.watch.st-called:hover{filter:brightness(1.1);background:var(--calD)}
+.watch.st-called.cR:hover{background:var(--calR)}
+.watch.st-called.cO:hover{background:var(--calO)}
 .rptg{font-size:12px;color:var(--dim);margin-top:6px}
 
 /* ---- table ---- */
@@ -904,7 +912,10 @@ function renderDetail() {
     const gap = x => x.f.democrat_pct == null ? Math.abs(x.rank - 4) * 30 : Math.abs(x.f.democrat_pct - x.f.republican_pct);
     const watch = M.seats.filter(x => x.rank < 9).sort((a, b) => gap(a) - gap(b) || a.code.localeCompare(b.code)).slice(0, 8);
     el.innerHTML = `<h3>Races to watch</h3><div class="sub">Closest in the forecast. Click any square, bar or state for the matchup.</div>` +
-      watch.map(w => `<button class="watch" data-key="${w.key}">${esc(seatName(ch, w))}<small>${LABELS[w.rank]} · ${esc(w.f.democratic || '?')} vs ${esc(w.f.republican || '?')}</small></button>`).join('');
+      watch.map(w => {
+        const rs = LIVE ? result(ch, w.key) : null, called = rs && rs.st === 'called';
+        return `<button class="watch${called ? ' st-called c' + rs.party : ''}" data-key="${w.key}">${esc(seatName(ch, w))}<small>${called ? `Called · ${esc(rs.win.name)} ✓ · forecast ${LABELS[w.rank]}` : `${LABELS[w.rank]} · ${esc(w.f.democratic || '?')} vs ${esc(w.f.republican || '?')}`}</small></button>`;
+      }).join('');
     return;
   }
   const f = s.f, r = result(ch, s.key);
