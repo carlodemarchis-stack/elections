@@ -972,7 +972,9 @@ function renderDiff(ch, M) {
     const mn = Math.min(...rk), mx = Math.max(...rk);
     if (mx - mn >= 2) rows.push({code, rk, mn, mx, spread: mx - mn, split: mn < 4 && mx > 4});
   }
-  rows.sort((a, b) => b.spread - a.spread || b.split - a.split || Math.abs(a.rk[0] - 4) - Math.abs(b.rk[0] - 4) || a.code.localeCompare(b.code));
+  // election night: races already called first, then those being counted, then the rest; each group biggest gap first
+  const stRank = r => { if (!LIVE) return 0; const x = result(ch, r.code.toLowerCase()); return x.st === 'called' ? 0 : x.st === 'cnt' ? 1 : 2; };
+  rows.sort((a, b) => stRank(a) - stRank(b) || b.spread - a.spread || b.split - a.split || Math.abs(a.rk[0] - 4) - Math.abs(b.rk[0] - 4) || a.code.localeCompare(b.code));
   const splits = rows.filter(r => r.split).length, shown = S.diffAll ? rows : rows.slice(0, 8);
   const most = side => { const n = [0, 0, 0]; for (const r of rows) { const e = side === 'D' ? r.mn : r.mx, h = r.rk.map((v, i) => v === e ? i : -1).filter(i => i >= 0); if (h.length === 1) n[h[0]]++; } return ids.map((id, i) => `${SRC[id].name} <b>${n[i]}</b>`).join(' · '); };
   const what = ch === 'house' ? 'districts' : 'races';
@@ -988,7 +990,7 @@ function renderDiff(ch, M) {
       <span class="dlab">${r.rk.map((v, i) => `<div class="sc-${ids[i]}"><b>${SRC[ids[i]].letter}</b>${LABELS[v]}${mk(v)}</div>`).join('')}</span></button>`;
   };
   el.innerHTML = `<h2>Where the three sources disagree</h2>
-    <p class="dsub">${rows.length ? `Of ${rated} ${what} rated by all three, <b>${rows.length}</b> are two or more steps apart on the nine-step scale${splits ? `, and in <b>${splits}</b> of them the sources fall on opposite sides of Tossup` : ''}. Biggest gaps first; click one to open it.` : `Of ${rated} ${what} rated by all three, none is more than one step apart.`}</p>
+    <p class="dsub">${rows.length ? `Of ${rated} ${what} rated by all three, <b>${rows.length}</b> are two or more steps apart on the nine-step scale${splits ? `, and in <b>${splits}</b> of them the sources fall on opposite sides of Tossup` : ''}. ${LIVE ? 'Called races first, then the ones being counted; biggest gaps first within each. Click one to open it.' : 'Biggest gaps first; click one to open it.'}` : `Of ${rated} ${what} rated by all three, none is more than one step apart.`}</p>
     ${rows.length ? `<div class="dkey">${ids.map(id => `<span class="sc-${id}"><i></i>${SRC[id].name}</span>`).join('')}<span>bar = the spread between them</span></div>
     <div>${shown.map(row).join('')}</div>
     ${rows.length > 8 ? `<button class="pill dmore" data-diffall="1">${S.diffAll ? 'Show fewer' : `Show all ${rows.length}`}</button>` : ''}
