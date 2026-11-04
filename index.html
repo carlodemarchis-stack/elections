@@ -120,6 +120,7 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .mk2 em{position:absolute;top:-2px;left:6px;font-style:normal;font-size:11px;font-weight:700;white-space:nowrap;color:var(--ink)}
 .sfoot{font-size:13px;color:var(--dim)}
 .sfoot b{color:var(--ink)}
+.sfoot .fl i{display:inline-block;width:14px;height:3px;background:#fff;vertical-align:middle;margin-right:5px}
 @media (max-width:700px){.srow2{grid-template-columns:1fr 1fr;gap:6px 12px}.sbar{grid-column:1/-1;order:3}}
 #bandh2{margin-top:18px}
 .dotD,.dotR,.dotO{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:baseline}
@@ -713,15 +714,7 @@ function render() {
   if (M.hold.R) seg('<i class="hR"></i>', 'Not up', M.hold.R, M.hold.R);
   $('#legend').innerHTML = parts.join('');
   $('#bandend').insertAdjacentHTML('beforeend', tossup);
-  let nCalled = 0, nFlipped = 0;
-  if (LIVE) for (const x of M.seats) {
-    const r = result(ch, x.key);
-    if (r.st === 'called') { nCalled++; const lean = leanOf(x.rank); if (lean && lean !== r.party) nFlipped++; }
-  }
-  $('#legend2').innerHTML = LIVE
-    ? lg('<i class="st-called cD"></i><i class="st-called cR" style="margin-left:-4px"></i>', 'Called', nCalled) +
-      lg('<i style="background:#fff;height:3px;margin-top:-6px"></i>', 'Flipped against the forecast', nFlipped)
-    : '';
+  $('#legend2').innerHTML = '';   // the called and flipped counts live in the scoreboard (renderCalled)
   layoutLegend();
 
   renderCalled(ch, M);
@@ -842,7 +835,7 @@ function renderCalled(ch, M) {
         <div class="mk2" style="left:${need / total * 100}%"><em>${need} to control</em></div></div>
       <div class="sd R"><b>${R}</b><span>Republicans${ch !== 'house' && M.hold.R ? ` <small>incl. ${M.hold.R} not up</small>` : ''}</span></div>
     </div>
-    <div class="sfoot">${[`<b>${called}</b> of ${M.seats.length} ${what} called`, `${cnt} counting`, `${pend} yet to report`, co ? `<b>${co}</b> other` : '', flip ? `<b>${flip}</b> against the forecast` : '', lead].filter(Boolean).join(' · ')}</div>
+    <div class="sfoot">${[`<b>${called}</b> of ${M.seats.length} ${what} called`, `${cnt} counting`, `${pend} yet to report`, co ? `<b>${co}</b> other` : '', `<span class="fl"><i></i><b>${flip}</b> flipped against the forecast</span>`, lead].filter(Boolean).join(' · ')}</div>
   </div>`;
 }
 
