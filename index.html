@@ -173,7 +173,9 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .st-called.cR{--c:var(--calR);background-image:none}
 .st-called.cO{--c:var(--calO);background-image:none}
 .upset::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:#fff}
-.tile .upset::after,.sbox .upset::after{height:auto;bottom:auto;top:50%;left:50%;right:auto;width:35%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%)}
+.wds{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:5%;pointer-events:none}
+.wds b{flex:none;width:34%;aspect-ratio:1;border-radius:50%;background:var(--sc);box-shadow:0 0 0 1px rgba(9,11,18,.55)}
+.wds.n2 b{width:30%}.wds.n3 b{width:26%}
 .sel{outline:2px solid #fff;outline-offset:1px;z-index:3}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.live .st-cnt{animation:none}}
@@ -367,6 +369,7 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
     <div>
       <div class="h2row"><h2 id="mapH2">By state</h2><div class="seg" id="viewseg"></div></div>
       <div id="tilescroll"><div id="tiles"></div><div id="blocks" hidden></div></div>
+      <div class="dkey" id="mapkey"></div>
     </div>
     <div>
       <h2>Race</h2>
@@ -797,6 +800,15 @@ function layoutLegend() {
 }
 window.addEventListener('resize', layoutLegend);
 
+// One dot per source that leaned the wrong way on a called race (civicAPI white, Kalshi teal, Fox gold).
+// A Tossup is no call, so it never gets a dot.
+function missDots(ch, s) {
+  if (!LIVE) return '';
+  const r = result(ch, s.key); if (r.st !== 'called') return '';
+  const docs = {civicapi: S.civ[ch], kalshi: S.alt.kalshi?.[ch], foxnews: S.alt.foxnews?.[ch]};
+  const miss = Object.entries(docs).filter(([, d]) => { const l = leanOf(rankOf(d?.states?.[s.code]?.rating)); return l && l !== r.party; }).map(([id]) => id);
+  return miss.length ? `<span class="wds n${miss.length}">${miss.map(id => `<b class="sc-${id}"></b>`).join('')}</span>` : '';
+}
 function seatCls(ch, s, inBand) {
   const r = result(ch, s.key), cl = inBand ? ['b'] : [];
   cl.push('r' + s.rank);
@@ -804,7 +816,7 @@ function seatCls(ch, s, inBand) {
     cl.push('st-' + r.st);
     if (r.st === 'called') {
       cl.push('c' + r.party);
-      const lean = leanOf(s.rank); if (lean && lean !== r.party) cl.push('upset');
+      const lean = leanOf(s.rank); if (inBand && lean && lean !== r.party) cl.push('upset');   // squares use missDots instead
     }
   }
   return cl.join(' ');
@@ -841,6 +853,7 @@ function renderCalled(ch, M) {
 }
 
 function renderBlocks(ch, M) {
+  $('#mapkey').innerHTML = LIVE ? `<span>A dot on a called race: that source leaned the wrong way</span>${['civicapi', 'kalshi', 'foxnews'].map(id => `<span class="sc-${id}"><i></i>${SRC[id].name}</span>`).join('')}` : '';
   const blocks = ch === 'house' && S.view === 'blocks';
   $('#viewseg').innerHTML = ch !== 'house' ? '' : [['map', 'Map'], ['blocks', 'Equal blocks']].map(([v, l]) =>
     `<button class="pill sm ${S.view === v ? 'on' : ''}" data-view="${v}" aria-pressed="${S.view === v}">${l}</button>`).join('');
@@ -853,7 +866,7 @@ function renderBlocks(ch, M) {
   $('#mapH2').textContent = 'By state, biggest first · one block per district, five to a column, safest Democratic first';
   $('#blocks').innerHTML = states.map(([ab, ss]) => {
     ss.sort((a, b) => a.rank - b.rank || b.f.democrat_pct - a.f.democrat_pct || a.code.localeCompare(b.code));
-    return `<div class="sbox"><div class="sl">${ab}<em>${ss.length}</em></div><div class="sg">${ss.map(s => `<i class="${seatCls(ch, s, false)}" data-key="${s.key}"></i>`).join('')}</div></div>`;
+    return `<div class="sbox"><div class="sl">${ab}<em>${ss.length}</em></div><div class="sg">${ss.map(s => `<i class="${seatCls(ch, s, false)}" data-key="${s.key}">${missDots(ch, s)}</i>`).join('')}</div></div>`;
   }).join('');
 }
 
@@ -867,7 +880,7 @@ function renderTiles(ch, M) {
     if (!ss.length) return `<div class="tile off" style="${pos}"><div class="ab">${ab}<em>–</em></div></div>`;
     const cols = ch === 'house' ? Math.ceil(Math.sqrt(ss.length)) : 1;
     return `<div class="tile ${ss.length === 1 ? 'one' : ''}" style="${pos}"><div class="ab">${ab}${ch === 'house' ? `<em>${ss.length}</em>` : ''}</div>
-      <div class="sqs" style="--n:${cols}">${ss.map(s => `<i class="${seatCls(ch, s, false)}" data-key="${s.key}"></i>`).join('')}</div></div>`;
+      <div class="sqs" style="--n:${cols}">${ss.map(s => `<i class="${seatCls(ch, s, false)}" data-key="${s.key}">${missDots(ch, s)}</i>`).join('')}</div></div>`;
   }).join('');
 }
 
