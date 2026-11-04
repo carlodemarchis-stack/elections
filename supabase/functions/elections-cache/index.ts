@@ -52,7 +52,8 @@ const SOURCES = {
   },
 } as const;
 type Kind = keyof typeof SOURCES;
-const LOCK_MS = 20_000;
+const FETCH_BUDGET_MS = 45_000;
+const LOCK_MS = 60_000; // longer than one refresh can take (FETCH_BUDGET_MS plus the table writes)
 
 const SB = Deno.env.get("SUPABASE_URL")!;
 const KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -98,13 +99,26 @@ function slimForecast(doc: any) {
   return { last_updated: doc.last_updated, has_percentages: doc.has_percentages, states };
 }
 
+// civicAPI on election night (measured 2026-11-04): about half of requests answer 502 at once, and the
+// ones that succeed take 11-15 s (the House document is 330 KB). A 10 s timeout therefore never let the
+// Senate or Governors refresh. Each document now gets up to 4 tries inside one 45 s budget.
 async function getJSON(path: string) {
-  const r = await fetch(`${BASE}/${path}`, {
-    headers: { "User-Agent": "agwas-elections-cache/1.0 (elections.aguywithascarf.com)" },
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
-  return r.json();
+  const deadline = Date.now() + FETCH_BUDGET_MS;
+  let err: unknown = new Error(`${path} -> no time left`);
+  for (let n = 0; n < 4 && Date.now() < deadline - 2_000; n++) {
+    try {
+      const r = await fetch(`${BASE}/${path}`, {
+        headers: { "User-Agent": "agwas-elections-cache/1.0 (elections.aguywithascarf.com)" },
+        signal: AbortSignal.timeout(Math.min(25_000, deadline - Date.now())),
+      });
+      if (r.ok) return await r.json();
+      err = new Error(`${path} -> ${r.status}`);
+    } catch (e) {
+      err = e;
+    }
+    await new Promise((done) => setTimeout(done, 400));
+  }
+  throw err;
 }
 
 // Each document is fetched on its own: one that fails (civicAPI 502s and timeouts under load) keeps
