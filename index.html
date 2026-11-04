@@ -251,6 +251,11 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
 .src .read b{color:var(--ink);font-size:18px;padding-right:2px}
 .src .what{font-size:12.5px;line-height:1.5;color:var(--dim)}
 .src .meta{font-size:11px;color:var(--faint);line-height:1.4}
+.src .q{margin-left:6px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--dim);cursor:pointer;flex:none}
+.src .q:hover,.src .q.on{color:var(--ink);border-color:rgba(150,166,205,.5)}
+.src .tag{margin-left:auto}
+.src .acc{font-size:11.5px;color:var(--dim);line-height:1.5;font-variant-numeric:tabular-nums}
+.src .acc b{font-weight:700;color:var(--ink)}.src .acc .good{color:#43c07a}.src .acc .bad{color:#e0554a}
 .src.on .meta.now{color:var(--sc)}
 .src[data-src=civicapi],.sc-civicapi{--sc:#e8ecf5}.src[data-src=kalshi],.sc-kalshi{--sc:#4fd1c5}.src[data-src=foxnews],.sc-foxnews{--sc:#f5b942}
 /* where they disagree */
@@ -395,7 +400,7 @@ const REHEARSAL = Q.has('rehearsal');
 const REPLAY = Q.has('replay');
 let LIVE = DEMO !== null || REHEARSAL || REPLAY || Date.now() >= LIVE_FROM;   // flips by itself when election day arrives, see boot
 
-const S = {ch:'house', view:'map', key:null, source:'civicapi', diffAll:false, fc:{}, civ:{}, alt:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}, notes:{}, test:{}};
+const S = {ch:'house', view:'map', key:null, source:'civicapi', help:{}, diffAll:false, fc:{}, civ:{}, alt:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}, notes:{}, test:{}};
 
 /* Two things civicAPI has done that the page must not pass on (found 2026-10-28):
    - a forecast that cannot be right (the 27 Oct Senate one: seat totals added up to 135 in a chamber
@@ -875,6 +880,23 @@ function sourceRead(doc, hold) {
   for (const f of Object.values(doc.states)) { const k = rankOf(f.rating); if (k < 4) D++; else if (k === 4) T++; else if (k < 9) R++; else N++; }
   return {D, T, R, N};
 }
+// How each source's calls have held up so far: for every rating strength, the called races it leaned the right way.
+// A Tossup is no call, so it is only counted.
+function calledRight(ch, doc) {
+  const lv = ['Safe', 'Likely', 'Lean', 'Tilt'].map(name => ({name, n: 0, ok: 0})); let tu = 0, any = 0;
+  for (const [code, f] of Object.entries(doc.states || {})) {
+    const r = result(ch, code.toLowerCase()), k = rankOf(f.rating);
+    if (r.st !== 'called' || k === 9) continue;
+    any++;
+    if (k === 4) { tu++; continue; }
+    const l = lv[k < 4 ? k : 8 - k]; l.n++; if (r.party === (k < 4 ? 'D' : 'R')) l.ok++;
+  }
+  if (!any) return '';
+  const bits = lv.filter(l => l.n).map(l => `${l.name} <b class="${l.ok === l.n ? 'good' : l.ok / l.n < .5 ? 'bad' : ''}">${l.ok}/${l.n}</b>`);
+  if (tu) bits.push(`Tossup ${tu} called`);
+  return `<span class="acc" title="Called races where the source leaned to the party that won, by how strongly it leaned">Right so far · ${bits.join(' · ')}</span>`;
+}
+
 function renderSources(ch, M) {
   const list = ['civicapi', ...['kalshi', 'foxnews'].filter(x => S.alt[x]?.[ch])];
   const info = {
@@ -887,10 +909,10 @@ function renderSources(ch, M) {
     const doc = src === 'civicapi' ? S.civ[ch] : S.alt[src][ch], r = sourceRead(doc, M.hold), on = S.source === src;
     const asof = src === 'civicapi' ? '' : `civicAPI's copy of ${doc.last_updated ? shortDate(doc.last_updated) : '–'}${r.N ? ` · ${M.seats.length - r.N} of ${M.seats.length} races priced` : ''}`;
     return `<button class="src ${on ? 'on' : ''}" data-src="${src}" role="radio" aria-checked="${on}">
-      <span class="top"><span class="dot"></span><b>${SRC[src].name}</b><span class="tag">${info[src][0]}</span></span>
+      <span class="top"><span class="dot"></span><b>${SRC[src].name}</b><span class="tag">${info[src][0]}</span><span class="q ${S.help[src] ? 'on' : ''}" role="button" tabindex="0" data-help="${src}" aria-expanded="${!!S.help[src]}" title="What is this source?">${S.help[src] ? '×' : '?'}</span></span>
       <span class="read"><b>${r.D}</b> D · <b>${r.T}</b> Tossup · <b>${r.R}</b> R${r.N ? ` · ${r.N} unpriced` : ''}</span>
-      <span class="what">${info[src][1]}</span>
-      ${info[src][2] || asof ? `<span class="meta">${[info[src][2], asof].filter(Boolean).join('<br>')}</span>` : ''}
+      ${LIVE ? calledRight(ch, doc) : ''}
+      ${S.help[src] ? `<span class="what">${info[src][1]}</span>${info[src][2] || asof ? `<span class="meta">${[info[src][2], asof].filter(Boolean).join('<br>')}</span>` : ''}` : ''}
       <span class="meta now">${on ? 'Showing this source on the page below' : 'Click to see the page through ' + SRC[src].name}</span></button>`;
   }).join('') + '</div>';
 }
@@ -970,6 +992,8 @@ function select(key) {
 document.addEventListener('click', e => {
   const v = e.target.closest('[data-view]');
   if (v) { S.view = v.dataset.view; try { localStorage.setItem('midterms.view', S.view); } catch (err) {} render(); return; }
+  const hp = e.target.closest('[data-help]');
+  if (hp) { S.help[hp.dataset.help] = !S.help[hp.dataset.help]; renderSources(S.ch, S.seats[S.ch]); return; }
   const sc = e.target.closest('[data-src]');
   if (sc) { setSource(sc.dataset.src); return; }
   const dm = e.target.closest('[data-diffall]');
@@ -1078,6 +1102,10 @@ $('#moreBtn').addEventListener('click', () => openMore(true));
 $('#mmodal').addEventListener('click', e => { if (e.target === e.currentTarget) openMore(false); });
 const toggleFs = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {});
 if (document.documentElement.requestFullscreen) $('#fsBtn').addEventListener('click', toggleFs); else $('#fsBtn').hidden = true;
+document.addEventListener('keydown', e => {
+  const hp = e.target.closest && e.target.closest('[data-help]');
+  if (hp && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); hp.click(); }
+});
 addEventListener('keydown', e => {
   if (e.key === 'Escape') openMore(false);
   else if (e.key === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && document.documentElement.requestFullscreen) toggleFs();
