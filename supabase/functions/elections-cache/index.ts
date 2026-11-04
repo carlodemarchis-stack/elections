@@ -29,11 +29,11 @@
 const BASE = "https://civicapi.org/api/v2";
 const SOURCES = {
   results: {
-    ttl: 30_000,
+    ttl: 120_000,   // being a couple of minutes late is fine, and civicAPI is struggling: ask it as little as we can
     urls: { house: "race/87524", senate: "race/87528", gov: "race/87535" },
   },
   sources: {
-    ttl: 600_000,
+    ttl: 1_800_000,
     urls: {
       "kalshi:house": "forecast/house/2026/kalshi",
       "kalshi:senate": "forecast/senate/2026/kalshi",
@@ -44,7 +44,7 @@ const SOURCES = {
     },
   },
   forecast: {
-    ttl: 600_000,
+    ttl: 1_800_000,
     urls: {
       house: "forecast/house/2026/civicapi",
       senate: "forecast/senate/2026/civicapi",
@@ -53,8 +53,8 @@ const SOURCES = {
   },
 } as const;
 type Kind = keyof typeof SOURCES;
-const FETCH_BUDGET_MS = 45_000;
-const LOCK_MS = 60_000; // longer than one refresh can take (FETCH_BUDGET_MS plus the table writes)
+const FETCH_BUDGET_MS = 60_000;
+const LOCK_MS = 90_000; // longer than one refresh can take (FETCH_BUDGET_MS plus the table writes)
 
 const SB = Deno.env.get("SUPABASE_URL")!;
 const KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -102,12 +102,13 @@ function slimForecast(doc: any) {
 
 // civicAPI on election night (measured 2026-11-04): about half of requests answer 502 at once, and the
 // ones that succeed take 11-15 s (the House document is 330 KB). A 10 s timeout therefore never let the
-// Senate or Governors refresh. Each document now gets up to 8 tries inside one 45 s budget, with a growing
-// pause (0.6 s, 1.2 s, ...): at 03:17 four quick tries all met 502s within two seconds and the refresh gave up.
+// Senate or Governors refresh. Each document gets up to 3 tries inside one 60 s budget, with a growing pause
+// (3 s, 6 s). Retrying harder only piles onto a server that is already overloaded (Cloudflare 502s, no 429),
+// so a document that still fails keeps its stored copy until the next refresh.
 async function getJSON(path: string) {
   const deadline = Date.now() + FETCH_BUDGET_MS;
   let err: unknown = new Error(`${path} -> no time left`);
-  for (let n = 0; n < 8 && Date.now() < deadline - 2_000; n++) {
+  for (let n = 0; n < 3 && Date.now() < deadline - 2_000; n++) {
     try {
       const r = await fetch(`${BASE}/${path}`, {
         headers: { "User-Agent": "agwas-elections-cache/1.0 (elections.aguywithascarf.com)" },
@@ -118,7 +119,7 @@ async function getJSON(path: string) {
     } catch (e) {
       err = e;
     }
-    await new Promise((done) => setTimeout(done, 600 * (n + 1)));
+    await new Promise((done) => setTimeout(done, 3_000 * (n + 1)));
   }
   throw err;
 }
