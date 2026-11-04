@@ -101,9 +101,26 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .oddsbar .on{background:repeating-linear-gradient(135deg,#2a2f3d 0 4px,#232734 4px 8px)}
 .oddsfix{font-size:11px;color:#e0b84a;margin-top:6px}
 .oddsnote{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:6px;gap:12px}
-#called{margin-top:14px;font-size:13px;color:var(--dim);min-height:20px}
-#called b{color:var(--ink)}
-#called:empty{display:none}   /* no line reserved for the election-night counter until it has something to say */
+#called{margin-top:16px;min-height:20px}
+#called:empty{display:none}   /* no block reserved for the election-night count until it has something to say */
+.score{background:var(--pan2);border:1px solid var(--line);border-radius:12px;padding:14px 18px 12px}
+.scap{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.scap b{color:var(--ink);letter-spacing:0;text-transform:none}
+.srow2{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:22px;align-items:center;margin:8px 0 6px}
+.sd{display:flex;flex-direction:column;line-height:1.1}
+.sd b{font-size:clamp(40px,6vw,68px);font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.sd span{font-size:13px;color:var(--dim);margin-top:2px}
+.sd small{font-size:11px;color:var(--faint)}
+.sd.D b{color:var(--calD)} .sd.R{text-align:right} .sd.R b{color:var(--calR)}
+.sbar{position:relative;padding:14px 0 6px}
+.cbar{display:flex;height:22px;border-radius:5px;overflow:hidden;background:var(--pan)}
+.cbar i{display:block;min-width:0;height:100%}
+.bD{background:var(--calD)} .bR{background:var(--calR)} .bO{background:var(--calO)} .bU{background:rgba(150,166,205,.14)}
+.mk2{position:absolute;top:2px;bottom:0;width:0;border-left:2px solid var(--ink)}
+.mk2 em{position:absolute;top:-2px;left:6px;font-style:normal;font-size:11px;font-weight:700;white-space:nowrap;color:var(--ink)}
+.sfoot{font-size:13px;color:var(--dim)}
+.sfoot b{color:var(--ink)}
+@media (max-width:700px){.srow2{grid-template-columns:1fr 1fr;gap:6px 12px}.sbar{grid-column:1/-1;order:3}}
 #bandh2{margin-top:18px}
 .dotD,.dotR,.dotO{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:baseline}
 .dotD{background:var(--calD)} .dotR{background:var(--calR)} .dotO{background:var(--calO)}
@@ -792,18 +809,31 @@ function seatCls(ch, s, inBand) {
 function renderCalled(ch, M) {
   const el = $('#called');
   if (!LIVE) { el.innerHTML = ''; return; }
-  let cd = 0, cr = 0, co = 0, cnt = 0, pend = 0;
+  let cd = 0, cr = 0, co = 0, cnt = 0, pend = 0, flip = 0;
   for (const s of M.seats) {
     const r = result(ch, s.key);
-    if (r.st === 'called') r.party === 'D' ? cd++ : r.party === 'R' ? cr++ : co++;
-    else if (r.st === 'cnt') cnt++; else pend++;
+    if (r.st === 'called') {
+      r.party === 'D' ? cd++ : r.party === 'R' ? cr++ : co++;
+      const lean = leanOf(s.rank); if (lean && lean !== r.party) flip++;
+    } else if (r.st === 'cnt') cnt++; else pend++;
   }
-  const D = M.hold.D + cd, R = M.hold.R + cr, need = CH[ch].need;
+  const D = M.hold.D + cd, R = M.hold.R + cr, need = CH[ch].need, total = M.hold.D + M.hold.R + M.seats.length;
   // Senate: 50 is enough for the party that holds the Vice Presidency, so Republicans clear the line at 50
   const rNeed = ch === 'senate' ? 50 : need;
-  const lead = ch === 'gov' ? (D >= need ? ` · <b>Democrats have a majority of governorships</b>` : R >= need ? ` · <b>Republicans have a majority of governorships</b>` : '')
-    : D >= need ? ` · <b>Democrats have reached ${need}</b>` : R >= rNeed ? ` · <b>Republicans have reached ${rNeed}${ch === 'senate' ? ' (the Vice President breaks ties)' : ''}</b>` : '';
-  el.innerHTML = `${DEMO !== null ? '<b>Demo night</b> (invented results over the real forecast) · ' : REPLAY ? '<b>Replay</b> (a saved civicAPI test election, not real results) · ' : REHEARSAL ? '<b>Rehearsal</b> (civicAPI\'s test election, not real results) · ' : ''}Called so far: <span class="dotD"></span><b>${D}</b> D · <span class="dotR"></span><b>${R}</b> R${co ? ` · <span class="dotO"></span><b>${co}</b> other` : ''} · ${cnt} counting · ${pend} yet to report${lead}`;
+  const lead = ch === 'gov' ? (D >= need ? `<b>Democrats have a majority of governorships</b>` : R >= need ? `<b>Republicans have a majority of governorships</b>` : '')
+    : D >= need ? `<b>Democrats have reached ${need}</b>` : R >= rNeed ? `<b>Republicans have reached ${rNeed}${ch === 'senate' ? ' (the Vice President breaks ties)' : ''}</b>` : '';
+  const open = total - D - R - co, what = ch === 'house' ? 'districts' : 'races', called = cd + cr + co;
+  const note = DEMO !== null ? 'Demo night (invented results over the real forecast)' : REPLAY ? 'Replay (a saved civicAPI test election, not real results)' : REHEARSAL ? "Rehearsal (civicAPI's test election, not real results)" : '';
+  el.innerHTML = `<div class="score">
+    <div class="scap">Called so far${note ? ` · <b>${note}</b>` : ''}</div>
+    <div class="srow2">
+      <div class="sd D"><b>${D}</b><span>Democrats${ch !== 'house' && M.hold.D ? ` <small>incl. ${M.hold.D} not up</small>` : ''}</span></div>
+      <div class="sbar"><div class="cbar"><i class="bD" style="flex:${D}"></i><i class="bU" style="flex:${open}"></i>${co ? `<i class="bO" style="flex:${co}"></i>` : ''}<i class="bR" style="flex:${R}"></i></div>
+        <div class="mk2" style="left:${need / total * 100}%"><em>${need} to control</em></div></div>
+      <div class="sd R"><b>${R}</b><span>Republicans${ch !== 'house' && M.hold.R ? ` <small>incl. ${M.hold.R} not up</small>` : ''}</span></div>
+    </div>
+    <div class="sfoot">${[`<b>${called}</b> of ${M.seats.length} ${what} called`, `${cnt} counting`, `${pend} yet to report`, co ? `<b>${co}</b> other` : '', flip ? `<b>${flip}</b> against the forecast` : '', lead].filter(Boolean).join(' · ')}</div>
+  </div>`;
 }
 
 function renderBlocks(ch, M) {
