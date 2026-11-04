@@ -1015,6 +1015,9 @@ function renderTable(ch, M) {
   }).join('');
 }
 
+// the viewer's own timezone, with its abbreviation (CET, EST, ...)
+const hhmm = t => new Date(t).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', timeZoneName: 'short'});
+const fmtLocal = t => new Date(t).toLocaleString('en-GB', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZoneName: 'short'});
 const fmtUTC = iso => new Date(iso).toLocaleString('en-GB', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC'}) + ' UTC';
 const shortDate = iso => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'});
 function renderStatus() {
@@ -1026,7 +1029,7 @@ function renderStatus() {
   if (LIVE && DEMO === null && !REPLAY && !REHEARSAL) {
     // civicAPI's own timestamp for this chamber's results: if it stops moving, the view is stale
     const ru = S.res[S.ch]?.last_updated, t = ru ? Date.parse(ru) : NaN, age = (Date.now() - t) / 6e4;
-    if (!isNaN(t)) bits.push(`<span class="${age > 10 ? 'stale' : ''}" title="civicAPI's results for this chamber were last updated at ${fmtUTC(ru)}${S.polled ? '; this page last checked at ' + new Date(S.polled).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', timeZone: 'UTC'}) + ' UTC' : ''}">updated ${new Date(t).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', timeZone: 'UTC'})} UTC${age > 10 ? ` · ${Math.round(age)} min ago` : ''}</span>`);
+    if (!isNaN(t)) bits.push(`<span class="${age > 10 ? 'stale' : ''}" title="civicAPI's results for this chamber were last updated at ${fmtLocal(ru)}${S.polled ? '; this page last checked at ' + hhmm(S.polled) : ''}">updated ${hhmm(t)}${age > 10 ? ` · ${Math.round(age)} min ago` : ''}</span>`);
   }
   else bits.push(days > 0 ? `<b>${days} day${days === 1 ? '' : 's'}</b> to election day` : 'Election day');
   if (!LIVE || DEMO !== null) bits.push(`forecast updated ${upd}${S.src.fc === 'live' ? '' : ' (cached)'}`);
