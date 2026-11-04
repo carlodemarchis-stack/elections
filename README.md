@@ -184,3 +184,7 @@ for those that publish odds. Forecasts come from `archive/baseline/sources-all.j
 (2026-11-04 08:14 UTC, every source dated 3 Nov or earlier; `--force` to replace). PredictIt, Decision Desk HQ, RRH and OpenSourceZone are
 shown only on request (partial coverage or weeks old); `civicapi_experimental` returns nothing. Results come from the same cache feed as the
 scorecard; `?demo=0.6` invents a night.
+
+**Shared top bar (2026-11-04):** `nav.js` + `nav.css` write the top bar of the scorecard, every-source and guide pages
+(`data-page` picks the highlighted tab, `data-chambers` adds the chamber switch). The map page carries the same bar inline in
+`index.html`: when you change one, change the other. Add a new page by adding a row to `TABS` in `nav.js` and to the map page's bar.

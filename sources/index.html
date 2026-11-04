@@ -22,6 +22,7 @@
 <meta name="twitter:image" content="https://elections.aguywithascarf.com/img/og.png?v=1">
 <!-- Umami --><script>try{/[?&#]noumami\b/.test(location.href)&&localStorage.setItem('umami.disabled','1')}catch(e){}</script><script defer src="https://m.aguywithascarf.com/k.js" data-website-id="da7c4444-fe20-4f84-baaf-47d34355418b"></script>
 <script defer src="https://dataviz.aguywithascarf.com/ver.js"></script><!-- End Umami -->
+<link rel="stylesheet" href="../nav.css">
 <style>
 :root{
   --bg:#090b12; --ink:#e8ecf5; --dim:#8b96ad; --faint:#5d6679;
@@ -35,32 +36,11 @@ html{background:var(--bg)}
 body{background:var(--bg);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;line-height:1.55}
 a{color:var(--ink)}
 b,strong{font-weight:700}
-#topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  padding:10px 16px;background:rgba(9,11,18,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);font-size:12px}
-#ctx{color:var(--dim);flex:1 1 220px;min-width:0}
-#ctx b{color:var(--ink)}
-.seg{display:flex;gap:6px}
 .pill{border:1px solid var(--line);background:var(--pan2);color:var(--dim);border-radius:99px;
   padding:6px 14px;font-size:12px;cursor:pointer;letter-spacing:.02em}
 .pill:hover{color:var(--ink);border-color:rgba(150,166,205,.35)}
 a.pill{text-decoration:none}
 .pill.on{background:var(--ink);border-color:var(--ink);color:#0a0d14;font-weight:700}
-.ic{width:30px;height:30px;border-radius:99px;border:1px solid var(--line);background:var(--pan2);color:var(--dim);
-  display:grid;place-items:center;cursor:pointer;padding:0}
-.ic:hover{color:var(--ink);border-color:rgba(150,166,205,.35)}
-.ic svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-@media (max-width:700px){#fsBtn{display:none}}
-.mod{position:fixed;inset:0;z-index:60;background:rgba(4,6,12,.82);backdrop-filter:blur(7px);display:none;place-items:center;padding:22px}
-.mod.on{display:grid}
-.mbox{width:min(430px,94vw);max-height:84vh;overflow:auto;background:#0d1019;border:1px solid var(--line);border-radius:20px;padding:22px 24px}
-.mbox h3{font-size:17px;font-weight:700;margin-bottom:12px}
-.mbox p{font-size:12.5px;color:var(--dim);line-height:1.65}
-.applist{display:flex;flex-direction:column;gap:3px}
-.approw{display:grid;grid-template-columns:12px 1fr auto;gap:11px;align-items:center;padding:9px 10px;border-radius:10px;
-  text-decoration:none;color:var(--ink);font-size:12.5px}
-.approw:hover{background:var(--pan)}
-.approw i{width:9px;height:9px;border-radius:99px}
-.approw em{font-style:normal;color:var(--dim);font-size:11px;display:block}
 #credit{color:var(--dim);font-size:11px}
 #credit a{text-decoration:none;border-bottom:1px solid var(--line)}
 #credit a:hover{color:var(--ink)}
@@ -128,25 +108,7 @@ details.more summary{cursor:pointer;color:var(--dim);font-size:13px;margin:8px 0
 </style>
 </head>
 <body>
-<div id="topbar">
-  <div id="ctx"><b>US Midterms 2026</b> · <span id="status">Every source vs the result</span></div>
-  <div class="seg" id="chambers" role="tablist" aria-label="Chamber"></div>
-  <a class="pill" href="../">Map</a>
-  <a class="pill" href="../scorecard/">Scorecard</a>
-  <a class="pill on" href="./">Every source</a>
-  <a class="pill" href="../help/">Guide</a>
-  <button class="ic" id="moreBtn" title="More sports experiences" aria-label="More sports experiences"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button class="ic" id="fsBtn" title="Fullscreen (f)" aria-label="Fullscreen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5"/></svg></button>
-  <div id="credit">Data: <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a><a class="agwas-ver" data-agwas-ver="midterms" href="https://dataviz.aguywithascarf.com/releases/#midterms"></a></div>
-</div>
-
-<div class="mod" id="mmodal" aria-hidden="true">
-  <div class="mbox" role="dialog" aria-label="More sports experiences">
-    <h3>More sports experiences</h3>
-    <div class="applist" id="applist"></div>
-    <p style="margin-top:12px"><a href="https://dataviz.aguywithascarf.com" target="_blank" rel="noopener">See them all →</a></p>
-  </div>
-</div>
+<script src="../nav.js" data-page="sources" data-ctx="Every source vs the result" data-chambers></script>
 
 <main>
   <h1>Every source vs the result</h1>
@@ -183,27 +145,6 @@ const party = p => /democrat/i.test(p || '') ? 'D' : /republican/i.test(p || '')
 const when = iso => new Date(iso).toLocaleString('en-GB', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC'}) + ' UTC';
 const dayOf = iso => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', {day: 'numeric', month: 'short', timeZone: 'UTC'});
 const leanTo = (i, a) => a === 'O' ? -Math.abs(4 - i) : a === 'D' ? 4 - i : i - 4;
-
-const $ = q => document.querySelector(q);
-const APPS = [
-  ['Formula 1','A season read lap by lap','#00d7b6','https://f1.aguywithascarf.com'],
-  ['Tennis','The season, one player at a time','#f2c14e','https://tennis.aguywithascarf.com'],
-  ['Football','Season towers, top 5 leagues','#2f9e58','https://top5.aguywithascarf.com'],
-  ['NFL','Wins up, losses down','#4d94e0','https://nfl.aguywithascarf.com'],
-  ['NBA','Season film and towers','#e0453f','https://nba.aguywithascarf.com'],
-  ['NHL','Season film and towers','#2a9fd8','https://nhl.aguywithascarf.com'],
-  ['World Cup','Road to the Final','#3fbe72','https://worldcupbracket.aguywithascarf.com'],
-  ['PGA TOUR','Season Film','#57a34a','https://golf.aguywithascarf.com'],
-  ['Athletics','World Record Film','#d98a3d','https://athletics.aguywithascarf.com']
-];
-$('#applist').innerHTML = APPS.map(a =>
-  `<a class="approw" href="${a[3]}" target="_blank" rel="noopener"><i style="background:${a[2]}"></i><span>${a[0]}<em>${a[1]}</em></span><span>↗</span></a>`).join('');
-const openMore = on => { $('#mmodal').classList.toggle('on', on); $('#mmodal').setAttribute('aria-hidden', on ? 'false' : 'true'); };
-$('#moreBtn').addEventListener('click', () => openMore(true));
-$('#mmodal').addEventListener('click', e => { if (e.target === e.currentTarget) openMore(false); });
-const toggleFs = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {});
-addEventListener('keydown', e => { if (e.key === 'Escape') openMore(false); });
-if (document.documentElement.requestFullscreen) $('#fsBtn').addEventListener('click', toggleFs); else $('#fsBtn').hidden = true;
 
 let FROZEN, CALLED, SRC;   // frozen forecasts; CALLED[ch][code lower] = 'D' | 'R' | 'O' | ''
 

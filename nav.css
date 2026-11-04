@@ -1,0 +1,32 @@
+/* The shared top bar of the sub-pages (scorecard, every source, guide), written by nav.js.
+   The map page carries the same bar inline in index.html: change them together. */
+#topbar,.mod{--pan:rgba(255,255,255,.05);--pan2:rgba(255,255,255,.02);--line:rgba(150,166,205,.15);--ink:#e8ecf5;--dim:#8b96ad}
+#topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:10px 16px;background:rgba(9,11,18,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);font-size:12px;line-height:1.55;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:300}
+#topbar #ctx{color:var(--dim);flex:1 1 220px;min-width:0}
+#topbar #ctx b{color:var(--ink);font-weight:700}
+#topbar .seg{display:flex;gap:6px}
+#topbar .pill{border:1px solid var(--line);background:var(--pan2);color:var(--dim);border-radius:99px;
+  padding:6px 14px;font-size:12px;cursor:pointer;letter-spacing:.02em;text-decoration:none;font-family:inherit;font-weight:300}
+#topbar .pill:hover{color:var(--ink);border-color:rgba(150,166,205,.35)}
+#topbar .pill.on{background:var(--ink);border-color:var(--ink);color:#0a0d14;font-weight:700}
+#topbar .ic{width:30px;height:30px;border-radius:99px;border:1px solid var(--line);background:var(--pan2);color:var(--dim);
+  display:grid;place-items:center;cursor:pointer;padding:0}
+#topbar .ic:hover{color:var(--ink);border-color:rgba(150,166,205,.35)}
+#topbar .ic svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:700px){#fsBtn{display:none}}
+#credit{color:var(--dim);font-size:11px}
+#credit a{color:inherit;text-decoration:none;border-bottom:1px solid var(--line)}
+#credit a:hover{color:var(--ink)}
+.mod{position:fixed;inset:0;z-index:60;background:rgba(4,6,12,.82);backdrop-filter:blur(7px);display:none;place-items:center;padding:22px;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:300}
+.mod.on{display:grid}
+.mbox{width:min(430px,94vw);max-height:84vh;overflow:auto;background:#0d1019;border:1px solid var(--line);border-radius:20px;padding:22px 24px;color:var(--ink)}
+.mbox h3{font-size:17px;font-weight:700;margin-bottom:12px;color:var(--ink);text-transform:none;letter-spacing:0}
+.mbox p{font-size:12.5px;color:var(--dim);line-height:1.65}
+.mbox p a{color:var(--ink)}
+.applist{display:flex;flex-direction:column;gap:3px}
+.approw{display:grid;grid-template-columns:12px 1fr auto;gap:11px;align-items:center;padding:9px 10px;border-radius:10px;
+  text-decoration:none;color:var(--ink);font-size:12.5px}
+.approw:hover{background:var(--pan)}
+.approw i{width:9px;height:9px;border-radius:99px}
+.approw em{font-style:normal;color:var(--dim);font-size:11px;display:block}
