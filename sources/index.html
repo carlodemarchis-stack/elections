@@ -82,7 +82,7 @@ details.more summary{cursor:pointer;color:var(--dim);font-size:13px;margin:8px 0
 #foot a{color:var(--dim)}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 6px}
 .tabs .pill,.sortrow .pill{cursor:pointer;font-family:inherit}
-.tabs .pill:not(.on),.sortrow .pill:not(.on),.morebtn{background:none}
+.tabs .pill:not(.on),.sortrow .pill:not(.on){background:none}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:12px 0 4px}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px;background:var(--c)}
 .seg-rs{--c:#43c07a}.seg-rn{--c:rgba(67,192,122,.42)}.seg-t{--c:#5d6679}.seg-wn{--c:rgba(224,85,74,.45)}.seg-ws{--c:#e0554a}
@@ -92,7 +92,6 @@ details.more summary{cursor:pointer;color:var(--dim);font-size:13px;margin:8px 0
 .sr .nm{font-size:15px;font-weight:700}
 .sr .nm small{display:block;font-size:11px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
 .sr .nm em{font-style:normal;font-weight:300;font-size:11px;color:var(--faint);display:block;letter-spacing:0;text-transform:none}
-.sr.thin .nm em{color:#e0b84a}
 .bar{display:flex;height:16px;border-radius:4px;overflow:hidden;background:var(--pan)}
 .bar b{display:block;height:100%;background:var(--c);min-width:0}
 .bar b+b{border-left:1px solid var(--bg)}
@@ -100,7 +99,6 @@ details.more summary{cursor:pointer;color:var(--dim);font-size:13px;margin:8px 0
 .nums .a{color:var(--ink);font-size:14px}
 .nums .a b.g{color:var(--good)} .nums .a b.r{color:var(--bad)}
 .nums .a span{margin-right:12px;white-space:nowrap}
-.sr.thin{opacity:.62}
 .sortrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:16px 0 0}
 .sortrow .pill{padding:4px 12px}
 @media (max-width:780px){.sr{grid-template-columns:1fr;gap:6px}.sr .nm small{display:inline;margin-left:8px}}
@@ -121,7 +119,7 @@ details.more summary{cursor:pointer;color:var(--dim);font-size:13px;margin:8px 0
   <div id="foot">
     <p>How it is scored. Every source is read through its nine-step rating, the one thing they all publish: Safe, Likely, Lean or Tilt toward a party, or Tossup. A rating that leans toward a party is a call, and it is <b>right</b> if that party won and <b>wrong</b> if the other one did (an independent winner makes every call wrong). A <b>Tossup</b> is no call: it is the so-so column, neither a hit nor a miss. The bar splits each column by how firm the rating was: Safe and Likely are firm, Lean and Tilt are narrow, so a wrong firm call is the worst result and a right narrow call the least impressive. <b>Right of calls</b> is right divided by right plus wrong.</p>
     <p>The <b>Brier score</b> is for sources that publish odds: for each called race it takes the squared gap between their chance of a Democratic win and what happened (1 or 0), times two so that a coin flip scores 0.5. Zero is perfect, lower is better. Races an independent won are left out. Sources cover different races, so compare Brier scores loosely.</p>
-    <p>What was saved. The forecasts are the copies civicAPI served on the morning of 4 November, dated 3 November, frozen by us before the count had moved them; they are not live prices. Four sources are set aside by default because they are too thin to compare: PredictIt covers only part of the House and the governorships, and Decision Desk HQ, RRH Elections and OpenSourceZone were last updated weeks or months ago. civicAPI's own "experimental" feed is empty and is not shown. Race calls are shown as published by civicAPI; we make none ourselves. <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a> · <a href="https://dataviz.aguywithascarf.com/">A guy with a scarf</a> · <a href="https://github.com/carlodemarchis-stack/elections/tree/main/archive/baseline" target="_blank" rel="noopener">the frozen copy</a></p>
+    <p>What was saved. The forecasts are the copies civicAPI served on the morning of 4 November, dated 3 November, frozen by us before the count had moved them; they are not live prices. Four sources are left out because they are too thin to compare: PredictIt covers only part of the House and the governorships, and Decision Desk HQ, RRH Elections and OpenSourceZone were last updated weeks or months ago. civicAPI's own "experimental" feed is empty and is not shown. Race calls are shown as published by civicAPI; we make none ourselves. <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a> · <a href="https://dataviz.aguywithascarf.com/">A guy with a scarf</a> · <a href="https://github.com/carlodemarchis-stack/elections/tree/main/archive/baseline" target="_blank" rel="noopener">the frozen copy</a></p>
     <p><a href="https://dataviz.aguywithascarf.com/releases/#midterms">Release notes</a> <a class="agwas-ver" data-agwas-ver="midterms" href="https://dataviz.aguywithascarf.com/releases/#midterms"></a></p>
   </div>
 </main>
@@ -141,7 +139,7 @@ const KIND = {civicapi: 'blend', cook: 'expert', sabato: 'expert', insideelectio
 const Q = new URLSearchParams(location.search);
 const DEMO = Q.has('demo') ? Math.min(1, Math.max(0, parseFloat(Q.get('demo')) || 0.6)) : null;
 const REHEARSAL = Q.has('rehearsal');
-const S = {ch: 'all', sort: 'right', thin: false};
+const S = {ch: 'all', sort: 'right'};
 const getJSON = async u => { const r = await fetch(u, {cache: 'no-store'}); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); };
 const party = p => /democrat/i.test(p || '') ? 'D' : /republican/i.test(p || '') ? 'R' : 'O';
 const when = iso => new Date(iso).toLocaleString('en-GB', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC'}) + ' UTC';
@@ -204,12 +202,11 @@ function thinWhy(id) {
   return null;
 }
 
-function rowHTML(id, e, thin) {
+function rowHTML(id, e) {
   const n = SRC[id].name, tot = e.rated || 1, seg = (c, v, t) => v ? `<b class="${c}" style="width:${v / tot * 100}%" title="${t}: ${v}"></b>` : '';
   const covers = CHS.filter(([k]) => SRC[id][k]).map(([, nm]) => nm);
-  const note = e.rated < e.called ? `<em>rated ${e.rated} of ${e.called} called</em>` : '';
-  return `<div class="sr${id === 'civicapi' ? ' me' : ''}${thin ? ' thin' : ''}">
-    <div class="nm">${esc(n)}<small>${KIND[id] || 'model'}${S.ch === 'all' && covers.length < 3 ? ' · ' + esc(covers.join(' + ') || 'no chamber') : ''}</small>${thin ? `<em>${esc(thin)}</em>` : note}</div>
+  return `<div class="sr${id === 'civicapi' ? ' me' : ''}">
+    <div class="nm">${esc(n)}<small>${KIND[id] || 'model'}${S.ch === 'all' && covers.length < 3 ? ' · ' + esc(covers.join(' + ') || 'no chamber') : ''}</small></div>
     <div class="bar" role="img" aria-label="${esc(n)}: ${e.right} right, ${e.t} Tossup, ${e.wrong} wrong">${e.rated
       ? seg('seg-rs', e.rs, 'Right, firm (Safe/Likely)') + seg('seg-rn', e.rn, 'Right, narrow (Lean/Tilt)') + seg('seg-t', e.t, 'Tossup') + seg('seg-wn', e.wn, 'Wrong, narrow (Lean/Tilt)') + seg('seg-ws', e.ws, 'Wrong, firm (Safe/Likely)') : ''}</div>
     <div class="nums"><div class="a"><span><b class="g">${e.right}</b> right</span><span><b>${e.t}</b> so-so</span><span><b class="r">${e.wrong}</b> wrong</span></div>
@@ -224,7 +221,7 @@ function render() {
   const cmp = {right: (a, b) => (b.e.pct ?? -1) - (a.e.pct ?? -1) || b.e.right - a.e.right,
     wrong: (a, b) => a.e.wrong - b.e.wrong || b.e.right - a.e.right,
     brier: (a, b) => (a.e.brier ?? 9) - (b.e.brier ?? 9)}[S.sort];
-  const shown = all.filter(x => !x.thin).sort(cmp), thin = all.filter(x => x.thin).sort(cmp);
+  const shown = all.filter(x => !x.thin).sort(cmp);
   const called = chambers.reduce((t, k) => t + Object.values(CALLED[k]).filter(Boolean).length, 0);
   const total = chambers.reduce((t, k) => t + Object.keys(CALLED[k]).length, 0);
   const tab = (v, l) => `<button class="pill${S.ch === v ? ' on' : ''}" data-ch="${v}">${l}</button>`;
@@ -236,9 +233,7 @@ function render() {
     <div class="legend"><span><i class="seg-rs"></i>Right, firm</span><span><i class="seg-rn"></i>Right, narrow</span><span><i class="seg-t"></i>Tossup (so-so)</span><span><i class="seg-wn"></i>Wrong, narrow</span><span><i class="seg-ws"></i>Wrong, firm</span></div>
     <div class="sortrow">Order by ${sort('right', 'Right of calls')}${sort('wrong', 'Fewest wrong')}${sort('brier', 'Brier score')}</div>
     <div class="list">${called ? '' : '<div class="banner" style="margin-top:14px"><b>Nothing has been called yet,</b> so every row is empty until the first race is.</div>'}
-    ${shown.map(x => rowHTML(x.id, x.e, null)).join('')}</div>
-    ${thin.length ? `<p style="margin-top:14px"><button class="pill morebtn" style="cursor:pointer;font-family:inherit" data-thin="1">${S.thin ? 'Hide' : 'Show'} the ${thin.length} thin source${thin.length > 1 ? 's' : ''}</button></p>
-    ${S.thin ? `<div class="list">${thin.map(x => rowHTML(x.id, x.e, x.thin)).join('')}</div>` : ''}` : ''}`;
+    ${shown.map(x => rowHTML(x.id, x.e)).join('')}</div>`;
 }
 
 (async () => {
@@ -271,7 +266,6 @@ function render() {
       const b = e.target.closest('button'); if (!b) return;
       if (b.dataset.ch) { S.ch = b.dataset.ch; history.replaceState(null, '', S.ch === 'all' ? location.pathname + location.search : '#' + S.ch); }
       else if (b.dataset.sort) S.sort = b.dataset.sort;
-      else if (b.dataset.thin) S.thin = !S.thin;
       else return;
       render();
     });
