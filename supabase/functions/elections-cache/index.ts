@@ -102,11 +102,12 @@ function slimForecast(doc: any) {
 
 // civicAPI on election night (measured 2026-11-04): about half of requests answer 502 at once, and the
 // ones that succeed take 11-15 s (the House document is 330 KB). A 10 s timeout therefore never let the
-// Senate or Governors refresh. Each document now gets up to 4 tries inside one 45 s budget.
+// Senate or Governors refresh. Each document now gets up to 8 tries inside one 45 s budget, with a growing
+// pause (0.6 s, 1.2 s, ...): at 03:17 four quick tries all met 502s within two seconds and the refresh gave up.
 async function getJSON(path: string) {
   const deadline = Date.now() + FETCH_BUDGET_MS;
   let err: unknown = new Error(`${path} -> no time left`);
-  for (let n = 0; n < 4 && Date.now() < deadline - 2_000; n++) {
+  for (let n = 0; n < 8 && Date.now() < deadline - 2_000; n++) {
     try {
       const r = await fetch(`${BASE}/${path}`, {
         headers: { "User-Agent": "agwas-elections-cache/1.0 (elections.aguywithascarf.com)" },
@@ -117,7 +118,7 @@ async function getJSON(path: string) {
     } catch (e) {
       err = e;
     }
-    await new Promise((done) => setTimeout(done, 400));
+    await new Promise((done) => setTimeout(done, 600 * (n + 1)));
   }
   throw err;
 }
