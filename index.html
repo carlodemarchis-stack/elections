@@ -281,7 +281,7 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
 .dsub{font-size:13px;color:var(--dim);max-width:860px}
 .dkey{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:10px 0 6px}
 .dkey i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px;background:var(--sc)}
-.drow{display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr) 96px;gap:14px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:8px 6px;cursor:pointer;color:var(--ink)}
+.drow{display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr) 112px;gap:14px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:8px 6px;cursor:pointer;color:var(--ink)}
 .drow:hover,.drow.sel{background:var(--pan2)}
 .drow .dn{font-size:14px;font-weight:700;line-height:1.25}
 .drow .dn small{display:block;font-weight:300;font-size:11px;color:var(--dim)}
@@ -289,6 +289,16 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
 .dscale i.cell{flex:1 1 0;background:var(--c);opacity:.3}
 .dscale .span{position:absolute;top:50%;height:3px;margin-top:-1.5px;background:rgba(232,236,245,.75);border-radius:2px}
 .dscale .mk{position:absolute;width:14px;height:14px;border-radius:50%;transform:translateX(-50%);background:var(--sc);border:2px solid var(--bg)}
+.drow.st-called{box-shadow:inset 3px 0 0 var(--calD)}
+.drow.st-called.cR{box-shadow:inset 3px 0 0 var(--calR)}
+.drow.st-called.cO{box-shadow:inset 3px 0 0 var(--calO)}
+.drow .dres{display:flex;align-items:center;gap:5px;font-weight:700;color:var(--ink);margin-top:2px}
+.drow .dres i{width:8px;height:8px;border-radius:2px;background:var(--calO)}
+.drow .dres.cD i{background:var(--calD)} .drow .dres.cR i{background:var(--calR)}
+.drow .dres.cnt{font-weight:300;color:var(--dim);animation:pulse 1.5s ease-in-out infinite}
+.dlab em{font-style:normal;font-weight:700;margin-left:4px}
+.dlab em.y{color:#43c07a} .dlab em.n{color:#e0554a} .dlab em.z{color:var(--faint)}
+@media (prefers-reduced-motion:reduce){.drow .dres.cnt{animation:none}}
 .dlab{font-size:11px;line-height:14px;color:var(--dim);white-space:nowrap}
 .dlab b{display:inline-block;width:13px;color:var(--sc)}
 .dread{font-size:12.5px;color:var(--dim);margin-top:10px;line-height:1.6}
@@ -308,7 +318,7 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
   .src{flex:0 0 min(86%,380px);scroll-snap-align:start}
 }
 @media (max-width:700px){
-  .drow{grid-template-columns:minmax(0,1fr) 92px}
+  .drow{grid-template-columns:minmax(0,1fr) 108px}
   .drow .dn{grid-column:1/-1}
 }
 </style>
@@ -351,8 +361,6 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
   <div class="legend" id="legend"></div>
   <div class="legend" id="legend2"></div>
 
-  <section id="diff"></section>
-
   <div class="cols">
     <div>
       <div class="h2row"><h2 id="mapH2">By state</h2><div class="seg" id="viewseg"></div></div>
@@ -363,6 +371,8 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
       <div id="detail"></div>
     </div>
   </div>
+
+  <section id="diff"></section>
 
   <details id="tabledet">
     <summary id="tablesum">All races as a table</summary>
@@ -967,12 +977,15 @@ function renderDiff(ch, M) {
   const most = side => { const n = [0, 0, 0]; for (const r of rows) { const e = side === 'D' ? r.mn : r.mx, h = r.rk.map((v, i) => v === e ? i : -1).filter(i => i >= 0); if (h.length === 1) n[h[0]]++; } return ids.map((id, i) => `${SRC[id].name} <b>${n[i]}</b>`).join(' · '); };
   const what = ch === 'house' ? 'districts' : 'races';
   const row = r => {
-    const f = civ.states[r.code], key = r.code.toLowerCase();
-    return `<button class="drow" data-key="${key}" aria-label="${esc(seatName(ch, {key, code: r.code}))}: ${ids.map((id, i) => SRC[id].name + ' ' + LABELS[r.rk[i]]).join(', ')}">
-      <span class="dn">${esc(seatName(ch, {key, code: r.code}))}<small>${esc(f.democratic || '?')} vs ${esc(f.republican || '?')}</small></span>
+    const f = civ.states[r.code], key = r.code.toLowerCase(), rs = LIVE ? result(ch, key) : null, called = rs && rs.st === 'called';
+    const res = !rs ? '' : called ? `<small class="dres c${rs.party}"><i></i>Called: ${esc(rs.win.name)} · ${rs.party}</small>` : rs.st === 'cnt' ? `<small class="dres cnt">Counting · ${rs.rep}% reporting</small>` : '';
+    // against the result: did this source lean to the winner (✓), the loser (✗), or make no call (–)
+    const mk = v => { if (!called) return ''; const l = leanOf(v); return l ? (l === rs.party ? '<em class="y">✓</em>' : '<em class="n">✗</em>') : '<em class="z">–</em>'; };
+    return `<button class="drow${called ? ' st-called c' + rs.party : ''}" data-key="${key}" aria-label="${esc(seatName(ch, {key, code: r.code}))}: ${ids.map((id, i) => SRC[id].name + ' ' + LABELS[r.rk[i]]).join(', ')}${called ? '. Called for ' + esc(rs.win.name) : ''}">
+      <span class="dn">${esc(seatName(ch, {key, code: r.code}))}<small>${esc(f.democratic || '?')} vs ${esc(f.republican || '?')}</small>${res}</span>
       <span class="dscale">${RATINGS.map((_, k) => `<i class="cell r${k}"></i>`).join('')}<i class="span" style="left:${(r.mn + .5) / 9 * 100}%;width:${(r.mx - r.mn) / 9 * 100}%"></i>${
         r.rk.map((v, i) => `<i class="mk sc-${ids[i]}" style="left:${(v + .5) / 9 * 100}%;top:${i * 14}px" title="${SRC[ids[i]].name}: ${LABELS[v]}"></i>`).join('')}</span>
-      <span class="dlab">${r.rk.map((v, i) => `<div class="sc-${ids[i]}"><b>${SRC[ids[i]].letter}</b>${LABELS[v]}</div>`).join('')}</span></button>`;
+      <span class="dlab">${r.rk.map((v, i) => `<div class="sc-${ids[i]}"><b>${SRC[ids[i]].letter}</b>${LABELS[v]}${mk(v)}</div>`).join('')}</span></button>`;
   };
   el.innerHTML = `<h2>Where the three sources disagree</h2>
     <p class="dsub">${rows.length ? `Of ${rated} ${what} rated by all three, <b>${rows.length}</b> are two or more steps apart on the nine-step scale${splits ? `, and in <b>${splits}</b> of them the sources fall on opposite sides of Tossup` : ''}. Biggest gaps first; click one to open it.` : `Of ${rated} ${what} rated by all three, none is more than one step apart.`}</p>
