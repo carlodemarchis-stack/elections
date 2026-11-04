@@ -13,7 +13,8 @@
 // cache measured 1 hit in 22. The last good payload lives in public.elections_cache instead.
 //
 //   fresh row            -> serve it                                  (X-Cache: hit)
-//   stale row, lock won  -> refresh from civicAPI, store, serve it    (X-Cache: miss)
+//   stale row, lock won  -> serve the stored copy now, refresh from civicAPI after the response
+//                           (X-Cache: refreshing); with no stored copy it waits and stores (X-Cache: miss)
 //   stale row, lock lost -> serve the stale row, someone else is on it (X-Cache: stale)
 //
 // The lock is one conditional UPDATE (lock_until_ms in the past AND ts_ms older than the TTL),
@@ -184,6 +185,14 @@ async function writeRow(kind: Kind, body: string) {
   if (!r.ok) throw new Error(`write ${r.status}`);
 }
 
+async function refreshInBackground(kind: Kind, prevBody: string) {
+  try {
+    await writeRow(kind, await fetchUpstream(kind, prevBody));
+  } catch (e) {
+    console.error("elections-cache background refresh", kind, String(e));
+  }
+}
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
@@ -217,6 +226,14 @@ Deno.serve(async (req: Request) => {
     if (row?.body && now - row.ts_ms <= SOURCES[kind].ttl) return reply(kind, row.body, row.ts_ms, "hit");
 
     if (await tryLock(kind, now)) {
+      // civicAPI takes 11-15 s per document under load, so the viewer who wins the lock must not wait for it:
+      // serve the stored copy at once and refresh after the response (EdgeRuntime.waitUntil).
+      // deno-lint-ignore no-explicit-any
+      const rt = (globalThis as any).EdgeRuntime;
+      if (row?.body && rt?.waitUntil) {
+        rt.waitUntil(refreshInBackground(kind, row.body));
+        return reply(kind, row.body, row.ts_ms, "refreshing");
+      }
       const body = await fetchUpstream(kind, row?.body ?? null);
       await writeRow(kind, body);
       return reply(kind, body, Date.now(), "miss");
