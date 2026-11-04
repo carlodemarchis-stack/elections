@@ -101,6 +101,7 @@ h2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
 .oddsbar .on{background:repeating-linear-gradient(135deg,#2a2f3d 0 4px,#232734 4px 8px)}
 .oddsfix{font-size:11px;color:#e0b84a;margin-top:6px}
 .oddsnote{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:6px;gap:12px}
+#status .stale{color:#e0b84a}
 #called{margin-top:16px;min-height:20px}
 #called:empty{display:none}   /* no block reserved for the election-night count until it has something to say */
 .score{background:var(--pan2);border:1px solid var(--line);border-radius:12px;padding:14px 18px 12px}
@@ -556,7 +557,7 @@ async function ingestResults(k, data, live) {
   }
   if (!live && S.res[k]?._live) return;   // keep the last good live copy rather than fall back to a stale file
   if (DEMO !== null) data = demoize(k, data);
-  data._live = live; S.res[k] = data; S.src.res = live ? 'live' : (S.src.res || 'snapshot');
+  data._live = live; if (live) S.polled = Date.now(); S.res[k] = data; S.src.res = live ? 'live' : (S.src.res || 'snapshot');
   for (const [rk, r] of Object.entries(data.region_results || {})) if (r.name) S.names[k + ':' + rk] = r.name;
 }
 async function pullResults() {
@@ -926,7 +927,8 @@ function calledRight(ch, doc) {
   }
   if (!any) return '';
   const bits = lv.filter(l => l.n).map(l => `${l.name} <b class="${l.ok === l.n ? 'good' : 'bad'}">${l.ok}/${l.n}</b>`);
-  if (tu) bits.push(`Tossup ${tu} called`);
+  // a Tossup is no call, so it is neither right nor wrong: shown neutral, and shown as 0 for a source that rates some
+  if (tu || Object.values(doc.states || {}).some(f => rankOf(f.rating) === 4)) bits.push(`Tossup <b>${tu}</b> called`);
   return `<span class="acc" title="Called races where the source leaned to the party that won, by how strongly it leaned">Right so far · ${bits.join(' · ')}</span>`;
 }
 
@@ -1008,6 +1010,11 @@ function renderStatus() {
   const bits = [];
   if (DEMO !== null) bits.push('<b>demo night</b>');
   else if (LIVE) bits.push(`<b>live</b> · ${S.src.res === 'live' ? 'civicAPI' : 'cached snapshot'}`);
+  if (LIVE && DEMO === null && !REPLAY && !REHEARSAL) {
+    // civicAPI's own timestamp for this chamber's results: if it stops moving, the view is stale
+    const ru = S.res[S.ch]?.last_updated, t = ru ? Date.parse(ru) : NaN, age = (Date.now() - t) / 6e4;
+    if (!isNaN(t)) bits.push(`<span class="${age > 10 ? 'stale' : ''}" title="civicAPI's results for this chamber were last updated at ${fmtUTC(ru)}${S.polled ? '; this page last checked at ' + new Date(S.polled).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', timeZone: 'UTC'}) + ' UTC' : ''}">updated ${new Date(t).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', timeZone: 'UTC'})} UTC${age > 10 ? ` · ${Math.round(age)} min ago` : ''}</span>`);
+  }
   else bits.push(days > 0 ? `<b>${days} day${days === 1 ? '' : 's'}</b> to election day` : 'Election day');
   if (!LIVE || DEMO !== null) bits.push(`forecast updated ${upd}${S.src.fc === 'live' ? '' : ' (cached)'}`);
   if (S.source !== 'civicapi') bits.push(`showing <b>${SRC[S.source].name}</b>`);
