@@ -451,7 +451,7 @@ const REHEARSAL = Q.has('rehearsal');
 const REPLAY = Q.has('replay');
 let LIVE = DEMO !== null || REHEARSAL || REPLAY || Date.now() >= LIVE_FROM;   // flips by itself when election day arrives, see boot
 
-const S = {ch:'house', view:'map', key:null, source:'civicapi', help:{}, diffAll:false, fc:{}, civ:{}, alt:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}, notes:{}, test:{}};
+const S = {ch:'house', view:'map', key:null, source:'civicapi', help:{}, diffAll:true, fc:{}, civ:{}, alt:{}, res:{}, names:{}, seats:{}, src:{fc:'', res:''}, updated:{}, notes:{}, test:{}};
 
 /* Two things civicAPI has done that the page must not pass on (found 2026-10-28):
    - a forecast that cannot be right (the 27 Oct Senate one: seat totals added up to 135 in a chamber
