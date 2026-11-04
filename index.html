@@ -925,7 +925,7 @@ function calledRight(ch, doc) {
     const l = lv[k < 4 ? k : 8 - k]; l.n++; if (r.party === (k < 4 ? 'D' : 'R')) l.ok++;
   }
   if (!any) return '';
-  const bits = lv.filter(l => l.n).map(l => `${l.name} <b class="${l.ok === l.n ? 'good' : l.ok / l.n < .5 ? 'bad' : ''}">${l.ok}/${l.n}</b>`);
+  const bits = lv.filter(l => l.n).map(l => `${l.name} <b class="${l.ok === l.n ? 'good' : 'bad'}">${l.ok}/${l.n}</b>`);
   if (tu) bits.push(`Tossup ${tu} called`);
   return `<span class="acc" title="Called races where the source leaned to the party that won, by how strongly it leaned">Right so far · ${bits.join(' · ')}</span>`;
 }
