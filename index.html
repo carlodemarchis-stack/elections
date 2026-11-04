@@ -293,13 +293,24 @@ td .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
 .dscale i.cell{flex:1 1 0;background:var(--c);opacity:.3}
 .dscale .span{position:absolute;top:50%;height:3px;margin-top:-1.5px;background:rgba(232,236,245,.75);border-radius:2px}
 .dscale .mk{position:absolute;width:14px;height:14px;border-radius:50%;transform:translateX(-50%);background:var(--sc);border:2px solid var(--bg)}
-.drow.st-called{box-shadow:inset 3px 0 0 var(--calD)}
-.drow.st-called.cR{box-shadow:inset 3px 0 0 var(--calR)}
-.drow.st-called.cO{box-shadow:inset 3px 0 0 var(--calO)}
-.drow .dres{display:flex;align-items:center;gap:5px;font-weight:700;color:var(--ink);margin-top:2px}
-.drow .dres i{width:8px;height:8px;border-radius:2px;background:var(--calO)}
-.drow .dres.cD i{background:var(--calD)} .drow .dres.cR i{background:var(--calR)}
 .drow .dres.cnt{font-weight:300;color:var(--dim);animation:pulse 1.5s ease-in-out infinite}
+.drow .dres{display:block;font-weight:300;color:var(--ink);margin-top:3px}
+.drow .dres b{display:block;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:11px}
+/* a called race: the name cell becomes a solid block in the winner's colour, and the winner's half of the scale lights up */
+.drow.st-called{padding-left:0}
+.drow.st-called .dn{align-self:stretch;margin:-8px 0;padding:9px 14px;background:var(--calD);color:#fff;display:flex;flex-direction:column;justify-content:center}
+.drow.st-called.cR .dn{background:var(--calR)}
+.drow.st-called.cO .dn{background:var(--calO);color:#1a1405}
+.drow.st-called .dn small{color:rgba(255,255,255,.85)}
+.drow.st-called.cO .dn small{color:rgba(26,20,5,.8)}
+.drow.st-called .dres,.drow.st-called .dres b{color:#fff}
+.drow.st-called.cO .dres,.drow.st-called.cO .dres b{color:#1a1405}
+.drow.st-called .dres{font-size:12px}
+.dscale.wD .cell:nth-child(-n+4),.dscale.wR .cell:nth-child(n+6){opacity:.85}
+.dscale.wD .cell:nth-child(n+6),.dscale.wR .cell:nth-child(-n+4){opacity:.14}
+/* a source that leaned the wrong way: its dot is ringed in white with a dark gap, and bigger */
+.mk.wrong{box-shadow:0 0 0 2px #090b12,0 0 0 4px #fff;z-index:2}
+.dlab em.n{font-size:13px}
 .dlab em{font-style:normal;font-weight:700;margin-left:4px}
 .dlab em.y{color:#43c07a} .dlab em.n{color:#e0554a} .dlab em.z{color:var(--faint)}
 @media (prefers-reduced-motion:reduce){.drow .dres.cnt{animation:none}}
@@ -988,13 +999,13 @@ function renderDiff(ch, M) {
   const what = ch === 'house' ? 'districts' : 'races';
   const row = r => {
     const f = civ.states[r.code], key = r.code.toLowerCase(), rs = LIVE ? result(ch, key) : null, called = rs && rs.st === 'called';
-    const res = !rs ? '' : called ? `<small class="dres c${rs.party}"><i></i>Called: ${esc(rs.win.name)} · ${rs.party}</small>` : rs.st === 'cnt' ? `<small class="dres cnt">Counting · ${rs.rep}% reporting</small>` : '';
+    const res = !rs ? '' : called ? `<small class="dres"><b>${rs.party === 'D' ? 'Democrat' : rs.party === 'R' ? 'Republican' : 'Other'}</b> ${esc(rs.win.name)} ✓</small>` : rs.st === 'cnt' ? `<small class="dres cnt">Counting · ${rs.rep}% reporting</small>` : '';
     // against the result: did this source lean to the winner (✓), the loser (✗), or make no call (–)
     const mk = v => { if (!called) return ''; const l = leanOf(v); return l ? (l === rs.party ? '<em class="y">✓</em>' : '<em class="n">✗</em>') : '<em class="z">–</em>'; };
     return `<button class="drow${called ? ' st-called c' + rs.party : ''}" data-key="${key}" aria-label="${esc(seatName(ch, {key, code: r.code}))}: ${ids.map((id, i) => SRC[id].name + ' ' + LABELS[r.rk[i]]).join(', ')}${called ? '. Called for ' + esc(rs.win.name) : ''}">
       <span class="dn">${esc(seatName(ch, {key, code: r.code}))}<small>${esc(f.democratic || '?')} vs ${esc(f.republican || '?')}</small>${res}</span>
-      <span class="dscale">${RATINGS.map((_, k) => `<i class="cell r${k}"></i>`).join('')}<i class="span" style="left:${(r.mn + .5) / 9 * 100}%;width:${(r.mx - r.mn) / 9 * 100}%"></i>${
-        r.rk.map((v, i) => `<i class="mk sc-${ids[i]}" style="left:${(v + .5) / 9 * 100}%;top:${i * 14}px" title="${SRC[ids[i]].name}: ${LABELS[v]}"></i>`).join('')}</span>
+      <span class="dscale${called && rs.party !== 'O' ? ' w' + rs.party : ''}">${RATINGS.map((_, k) => `<i class="cell r${k}"></i>`).join('')}<i class="span" style="left:${(r.mn + .5) / 9 * 100}%;width:${(r.mx - r.mn) / 9 * 100}%"></i>${
+        r.rk.map((v, i) => { const l = leanOf(v), wrong = called && l && l !== rs.party; return `<i class="mk sc-${ids[i]}${wrong ? ' wrong' : ''}" style="left:${(v + .5) / 9 * 100}%;top:${i * 14}px" title="${SRC[ids[i]].name}: ${LABELS[v]}${wrong ? ' (wrong)' : called && l ? ' (right)' : ''}"></i>`; }).join('')}</span>
       <span class="dlab">${r.rk.map((v, i) => `<div class="sc-${ids[i]}"><b>${SRC[ids[i]].letter}</b>${LABELS[v]}${mk(v)}</div>`).join('')}</span></button>`;
   };
   el.innerHTML = `<h2>Where the three sources disagree</h2>
