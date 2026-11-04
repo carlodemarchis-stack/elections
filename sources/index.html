@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>US Midterms 2026 — Every source vs the result</title>
+<meta name="theme-color" content="#090b12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23090b12'/%3E%3Crect x='4' y='10' width='12' height='12' fill='%233a82e8'/%3E%3Crect x='16' y='10' width='12' height='12' fill='%23f0584a'/%3E%3C/svg%3E">
+<meta name="description" content="Fifteen forecasters, one election night: how many races each one called the right way, how many it hedged on and how many it got wrong, for the House, Senate and governorships as races are called.">
+<link rel="canonical" href="https://elections.aguywithascarf.com/sources/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="A Guy With A Scarf">
+<meta property="og:title" content="US Midterms 2026 — Every source vs the result">
+<meta property="og:description" content="Fifteen forecasters against the result: right, hedged or wrong, race by race as they are called.">
+<meta property="og:url" content="https://elections.aguywithascarf.com/sources/">
+<meta property="og:image" content="https://elections.aguywithascarf.com/img/og.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="US Midterms 2026 — Every source vs the result">
+<meta name="twitter:description" content="Fifteen forecasters against the result: right, hedged or wrong.">
+<meta name="twitter:image" content="https://elections.aguywithascarf.com/img/og.png?v=1">
+<!-- Umami --><script>try{/[?&#]noumami\b/.test(location.href)&&localStorage.setItem('umami.disabled','1')}catch(e){}</script><script defer src="https://m.aguywithascarf.com/k.js" data-website-id="da7c4444-fe20-4f84-baaf-47d34355418b"></script>
+<script defer src="https://dataviz.aguywithascarf.com/ver.js"></script><!-- End Umami -->
+<style>
+:root{
+  --bg:#090b12; --ink:#e8ecf5; --dim:#8b96ad; --faint:#5d6679;
+  --pan:rgba(255,255,255,.05); --line:rgba(150,166,205,.15);
+  --r0:#2f88f5; --r1:#3d7bd6; --r2:#4670b8; --r3:#4f6a9a; --r4:#686a72;
+  --r5:#98605a; --r6:#b85c52; --r7:#d85a48; --r8:#f2564a;
+  --calD:#2f86ff; --calR:#ff4a3d; --calO:#e0b84a; --good:#43c07a; --bad:#e0554a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;line-height:1.55}
+a{color:var(--ink)}
+b,strong{font-weight:700}
+#top{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;background:rgba(9,11,18,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);font-size:12px;color:var(--dim)}
+#top b{color:var(--ink)}
+.pill{border:1px solid var(--line);color:var(--ink);border-radius:99px;padding:6px 14px;text-decoration:none;font-size:12px}
+.pill.on{background:var(--ink);color:#0a0d14;font-weight:700;border-color:var(--ink)}
+main{max-width:1100px;margin:0 auto;padding:30px clamp(16px,2.5vw,32px) 70px}
+h1{font-size:clamp(28px,5vw,44px);font-weight:700;letter-spacing:-.02em;line-height:1.08;margin-bottom:12px}
+.lede{font-size:17px;color:var(--dim);max-width:760px}
+h2{font-size:22px;font-weight:700;margin:44px 0 6px}
+h2 small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+h3{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:22px 0 8px}
+p{margin:8px 0}
+.dim{color:var(--dim)}
+.card{background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+.status{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.status .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.status .v{font-size:15px;margin-top:2px}
+.prog{height:6px;background:var(--pan);border-radius:3px;overflow:hidden;margin:6px 0 2px}
+.prog i{display:block;height:100%;background:var(--ink)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:12px 0}
+.tile{background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.tile .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.tile .big{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:4px 0;font-variant-numeric:tabular-nums}
+.tile .sub{font-size:13px;color:var(--dim)}
+.good{color:var(--good)} .bad{color:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tblwrap{overflow-x:auto}
+.chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:700;background:var(--c);color:#fff;white-space:nowrap}
+.r0{--c:var(--r0)}.r1{--c:var(--r1)}.r2{--c:var(--r2)}.r3{--c:var(--r3)}.r4{--c:var(--r4)}.r5{--c:var(--r5)}.r6{--c:var(--r6)}.r7{--c:var(--r7)}.r8{--c:var(--r8)}
+.dp{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+.dp.D{background:var(--calD)}.dp.R{background:var(--calR)}.dp.O{background:var(--calO)}
+.banner{border-left:3px solid var(--line);padding:2px 0 2px 14px;color:var(--dim);margin:14px 0}
+.banner b{color:var(--ink)}
+.banner.warn{border-color:#e0b84a}
+.note{font-size:13px;color:var(--faint);max-width:760px}
+.sdot{display:inline-block;width:9px;height:9px;border-radius:99px;margin-right:6px;background:var(--sc)}
+.tile.src{border-top:3px solid var(--sc)}
+.tile .sub b{color:var(--ink)}
+.mk{font-weight:700;margin-left:4px}
+.mk.y{color:var(--good)} .mk.n{color:var(--bad)} .mk.z{color:var(--faint)}
+details.more summary{cursor:pointer;color:var(--dim);font-size:13px;margin:8px 0}
+#foot{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--faint);line-height:1.7}
+#foot a{color:var(--dim)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 6px}
+.tabs .pill,.sortrow .pill{cursor:pointer;font-family:inherit}
+.tabs .pill:not(.on),.sortrow .pill:not(.on),.morebtn{background:none}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:12px 0 4px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px;background:var(--c)}
+.seg-rs{--c:#43c07a}.seg-rn{--c:rgba(67,192,122,.42)}.seg-t{--c:#5d6679}.seg-wn{--c:rgba(224,85,74,.45)}.seg-ws{--c:#e0554a}
+.list{margin-top:10px}
+.sr{display:grid;grid-template-columns:200px minmax(0,1fr) 230px;gap:6px 18px;align-items:center;padding:11px 4px;border-bottom:1px solid var(--line)}
+.sr.me{background:rgba(255,255,255,.035)}
+.sr .nm{font-size:15px;font-weight:700}
+.sr .nm small{display:block;font-size:11px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.sr .nm em{font-style:normal;font-weight:300;font-size:11px;color:var(--faint);display:block;letter-spacing:0;text-transform:none}
+.sr.thin .nm em{color:#e0b84a}
+.bar{display:flex;height:16px;border-radius:4px;overflow:hidden;background:var(--pan)}
+.bar b{display:block;height:100%;background:var(--c);min-width:0}
+.bar b+b{border-left:1px solid var(--bg)}
+.nums{font-size:13px;font-variant-numeric:tabular-nums;color:var(--dim)}
+.nums .a{color:var(--ink);font-size:14px}
+.nums .a b.g{color:var(--good)} .nums .a b.r{color:var(--bad)}
+.nums .a span{margin-right:12px;white-space:nowrap}
+.sr.thin{opacity:.62}
+.sortrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:16px 0 0}
+.sortrow .pill{padding:4px 12px}
+@media (max-width:780px){.sr{grid-template-columns:1fr;gap:6px}.sr .nm small{display:inline;margin-left:8px}}
+</style>
+</head>
+<body>
+<div id="top">
+  <span><b>US Midterms 2026</b> · Every source</span>
+  <span><a class="pill" href="../scorecard/">Scorecard</a> <a class="pill" href="../help/">Guide</a> <a class="pill on" href="../">← Back to the page</a></span>
+</div>
+
+<main>
+  <h1>Every source vs the result</h1>
+  <p class="lede">civicAPI publishes its own forecast and republishes eighteen more, from outlets, models and markets. As each race is called, this page counts how many of them had it right, how many hedged with a Tossup, and how many had it wrong.</p>
+
+  <div id="app"><p class="dim" style="margin-top:30px">Loading the saved forecasts and the results…</p></div>
+
+  <div id="foot">
+    <p>How it is scored. Every source is read through its nine-step rating, the one thing they all publish: Safe, Likely, Lean or Tilt toward a party, or Tossup. A rating that leans toward a party is a call, and it is <b>right</b> if that party won and <b>wrong</b> if the other one did (an independent winner makes every call wrong). A <b>Tossup</b> is no call: it is the so-so column, neither a hit nor a miss. The bar splits each column by how firm the rating was: Safe and Likely are firm, Lean and Tilt are narrow, so a wrong firm call is the worst result and a right narrow call the least impressive. <b>Right of calls</b> is right divided by right plus wrong.</p>
+    <p>The <b>Brier score</b> is for sources that publish odds: for each called race it takes the squared gap between their chance of a Democratic win and what happened (1 or 0), times two so that a coin flip scores 0.5. Zero is perfect, lower is better. Races an independent won are left out. Sources cover different races, so compare Brier scores loosely.</p>
+    <p>What was saved. The forecasts are the copies civicAPI served on the morning of 4 November, dated 3 November, frozen by us before the count had moved them; they are not live prices. Four sources are set aside by default because they are too thin to compare: PredictIt covers only part of the House and the governorships, and Decision Desk HQ, RRH Elections and OpenSourceZone were last updated weeks or months ago. civicAPI's own "experimental" feed is empty and is not shown. Race calls are shown as published by civicAPI; we make none ourselves. <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a> · <a href="https://dataviz.aguywithascarf.com/">A guy with a scarf</a> · <a href="https://github.com/carlodemarchis-stack/elections/tree/main/archive/baseline" target="_blank" rel="noopener">the frozen copy</a></p>
+    <p><a href="https://dataviz.aguywithascarf.com/releases/#midterms">Release notes</a> <a class="agwas-ver" data-agwas-ver="midterms" href="https://dataviz.aguywithascarf.com/releases/#midterms"></a></p>
+  </div>
+</main>
+
+<script>
+(() => {
+'use strict';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ARCHIVE = '../archive/';
+const CACHE = 'https://atgelibbknccvxtuolay.supabase.co/functions/v1/elections-cache';
+const CHS = [['house', 'House'], ['senate', 'Senate'], ['gov', 'Governors']];
+const RACES = {house: 435, senate: 35, gov: 36};
+const RATINGS = ['Safe D','Likely D','Lean D','Tilt D','Tossup','Tilt R','Lean R','Likely R','Safe R'];
+const FIRM = new Set([0, 1, 7, 8]);
+const KIND = {civicapi: 'blend', cook: 'expert', sabato: 'expert', insideelections: 'expert', foxnews: 'expert', racetothewh: 'expert', rrh: 'expert',
+  kalshi: 'market', polymarket: 'market', predictit: 'market'};   // everything else is a model
+const Q = new URLSearchParams(location.search);
+const DEMO = Q.has('demo') ? Math.min(1, Math.max(0, parseFloat(Q.get('demo')) || 0.6)) : null;
+const REHEARSAL = Q.has('rehearsal');
+const S = {ch: 'all', sort: 'right', thin: false};
+const getJSON = async u => { const r = await fetch(u, {cache: 'no-store'}); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); };
+const party = p => /democrat/i.test(p || '') ? 'D' : /republican/i.test(p || '') ? 'R' : 'O';
+const when = iso => new Date(iso).toLocaleString('en-GB', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC'}) + ' UTC';
+const dayOf = iso => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', {day: 'numeric', month: 'short', timeZone: 'UTC'});
+const leanTo = (i, a) => a === 'O' ? -Math.abs(4 - i) : a === 'D' ? 4 - i : i - 4;
+
+let FROZEN, CALLED, SRC;   // frozen forecasts; CALLED[ch][code lower] = 'D' | 'R' | 'O' | ''
+
+function calledFromDoc(doc) {
+  const m = {};
+  for (const [k, r] of Object.entries(doc.region_results || {})) { const w = (r.candidates || []).find(c => c.winner); m[k] = w ? party(w.party) : ''; }
+  return m;
+}
+
+// ?demo: invent outcomes from civicAPI's own chances, to see the page fill up before there are votes
+function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function demoCalled() {
+  const out = {};
+  for (const [k] of CHS) {
+    out[k] = {};
+    for (const [code, [, pd]] of Object.entries(FROZEN.sources.civicapi[k].states)) {
+      const r = rng(hash(code + k)), u = r(), called = r() < DEMO;
+      out[k][code.toLowerCase()] = called ? (u < (pd ?? 50) / 100 ? 'D' : 'R') : '';
+    }
+  }
+  return out;
+}
+
+/* one source over the chosen chambers: right / wrong split by firmness, Tossups, Brier */
+function stats(id, chambers) {
+  const e = {rs: 0, rn: 0, t: 0, wn: 0, ws: 0, rated: 0, called: 0, bs: 0, bn: 0};
+  for (const k of chambers) {
+    const doc = SRC[id][k], called = CALLED[k];
+    if (!doc) continue;
+    for (const a of Object.values(called)) if (a) e.called++;
+    for (const [code, [rating, pd]] of Object.entries(doc.states)) {
+      const a = called[code.toLowerCase()], i = RATINGS.indexOf(rating);
+      if (!a || i < 0) continue;
+      e.rated++;
+      if (i === 4) e.t++;
+      else if (leanTo(i, a) > 0) FIRM.has(i) ? e.rs++ : e.rn++;
+      else FIRM.has(i) ? e.ws++ : e.wn++;
+      if (pd != null && a !== 'O') { e.bs += 2 * Math.pow(pd / 100 - (a === 'D' ? 1 : 0), 2); e.bn++; }
+    }
+  }
+  e.right = e.rs + e.rn; e.wrong = e.ws + e.wn; e.calls = e.right + e.wrong;
+  e.pct = e.calls ? e.right / e.calls : null;
+  e.brier = e.bn ? e.bs / e.bn : null;
+  return e;
+}
+
+/* too thin to compare: a chamber it covers only in part, or not refreshed in weeks */
+function thinWhy(id) {
+  for (const [k, name] of CHS) {
+    const d = SRC[id][k]; if (!d) continue;
+    if (d.last_updated < '2026-10-20') return `last updated ${dayOf(d.last_updated)}`;
+    if (Object.keys(d.states).length < 0.5 * RACES[k]) return `rates only ${Object.keys(d.states).length} of ${RACES[k]} ${name} races`;
+  }
+  return null;
+}
+
+function rowHTML(id, e, thin) {
+  const n = SRC[id].name, tot = e.rated || 1, seg = (c, v, t) => v ? `<b class="${c}" style="width:${v / tot * 100}%" title="${t}: ${v}"></b>` : '';
+  const covers = CHS.filter(([k]) => SRC[id][k]).map(([, nm]) => nm);
+  const note = e.rated < e.called ? `<em>rated ${e.rated} of ${e.called} called</em>` : '';
+  return `<div class="sr${id === 'civicapi' ? ' me' : ''}${thin ? ' thin' : ''}">
+    <div class="nm">${esc(n)}<small>${KIND[id] || 'model'}${S.ch === 'all' && covers.length < 3 ? ' · ' + esc(covers.join(' + ') || 'no chamber') : ''}</small>${thin ? `<em>${esc(thin)}</em>` : note}</div>
+    <div class="bar" role="img" aria-label="${esc(n)}: ${e.right} right, ${e.t} Tossup, ${e.wrong} wrong">${e.rated
+      ? seg('seg-rs', e.rs, 'Right, firm (Safe/Likely)') + seg('seg-rn', e.rn, 'Right, narrow (Lean/Tilt)') + seg('seg-t', e.t, 'Tossup') + seg('seg-wn', e.wn, 'Wrong, narrow (Lean/Tilt)') + seg('seg-ws', e.ws, 'Wrong, firm (Safe/Likely)') : ''}</div>
+    <div class="nums"><div class="a"><span><b class="g">${e.right}</b> right</span><span><b>${e.t}</b> so-so</span><span><b class="r">${e.wrong}</b> wrong</span></div>
+      ${e.calls ? `${Math.round(e.pct * 100)}% of calls` : 'no calls yet'}${e.brier != null ? ` · Brier ${e.brier.toFixed(3)}` : ''}</div>
+  </div>`;
+}
+
+function render() {
+  const chambers = S.ch === 'all' ? CHS.map(([k]) => k) : [S.ch];
+  const ids = Object.keys(SRC).filter(id => chambers.some(k => SRC[id][k]));
+  const all = ids.map(id => ({id, e: stats(id, chambers), thin: thinWhy(id)}));
+  const cmp = {right: (a, b) => (b.e.pct ?? -1) - (a.e.pct ?? -1) || b.e.right - a.e.right,
+    wrong: (a, b) => a.e.wrong - b.e.wrong || b.e.right - a.e.right,
+    brier: (a, b) => (a.e.brier ?? 9) - (b.e.brier ?? 9)}[S.sort];
+  const shown = all.filter(x => !x.thin).sort(cmp), thin = all.filter(x => x.thin).sort(cmp);
+  const called = chambers.reduce((t, k) => t + Object.values(CALLED[k]).filter(Boolean).length, 0);
+  const total = chambers.reduce((t, k) => t + Object.keys(CALLED[k]).length, 0);
+  const tab = (v, l) => `<button class="pill${S.ch === v ? ' on' : ''}" data-ch="${v}">${l}</button>`;
+  const sort = (v, l) => `<button class="pill${S.sort === v ? ' on' : ''}" data-sort="${v}">${l}</button>`;
+  document.getElementById('list').innerHTML =
+    `<div class="tabs">${tab('all', 'All three')}${CHS.map(([k, l]) => tab(k, l)).join('')}</div>
+    <div class="prog" title="${called} of ${total} races called"><i style="width:${total ? called / total * 100 : 0}%"></i></div>
+    <p class="dim" style="font-size:13px;margin-top:0">${called} of ${total} races called</p>
+    <div class="legend"><span><i class="seg-rs"></i>Right, firm</span><span><i class="seg-rn"></i>Right, narrow</span><span><i class="seg-t"></i>Tossup (so-so)</span><span><i class="seg-wn"></i>Wrong, narrow</span><span><i class="seg-ws"></i>Wrong, firm</span></div>
+    <div class="sortrow">Order by ${sort('right', 'Right of calls')}${sort('wrong', 'Fewest wrong')}${sort('brier', 'Brier score')}</div>
+    <div class="list">${called ? '' : '<div class="banner" style="margin-top:14px"><b>Nothing has been called yet,</b> so every row is empty until the first race is.</div>'}
+    ${shown.map(x => rowHTML(x.id, x.e, null)).join('')}</div>
+    ${thin.length ? `<p style="margin-top:14px"><button class="pill morebtn" style="cursor:pointer;font-family:inherit" data-thin="1">${S.thin ? 'Hide' : 'Show'} the ${thin.length} thin source${thin.length > 1 ? 's' : ''}</button></p>
+    ${S.thin ? `<div class="list">${thin.map(x => rowHTML(x.id, x.e, x.thin)).join('')}</div>` : ''}` : ''}`;
+}
+
+(async () => {
+  const app = document.getElementById('app');
+  try {
+    FROZEN = await getJSON(ARCHIVE + 'baseline/sources-all.json');
+    SRC = FROZEN.sources;
+    let source, testIgnored = false;
+    const archived = await getJSON(ARCHIVE + 'results/latest.json').catch(() => null);
+    try {
+      const d = await getJSON(CACHE + '?k=results');
+      const test = CHS.some(([k]) => d[k]?.test_data);
+      if (test && !REHEARSAL) { testIgnored = true; throw new Error('test data'); }
+      CALLED = Object.fromEntries(CHS.map(([k]) => [k, calledFromDoc(d[k])]));
+      source = test ? "civicAPI's TEST election, live" : 'live from civicAPI';
+    } catch (e) {
+      if (!archived) throw new Error('results unavailable');
+      CALLED = Object.fromEntries(CHS.map(([k]) => [k, Object.fromEntries(Object.entries(archived.chambers[k].seats).map(([c, r]) => [c, r[0]]))]));
+      source = `saved copy from ${when(archived.observed)}`;
+    }
+    if (DEMO !== null) { CALLED = demoCalled(); source = 'invented demo results'; }
+    const h = location.hash.slice(1); if (CHS.some(([k]) => k === h)) S.ch = h;
+
+    app.innerHTML = `<div class="card status"><div><div class="k">Forecasts used</div><div class="v">Frozen ${when(FROZEN.frozen)}</div><div class="dim" style="font-size:13px">${Object.keys(SRC).length} sources saved, as civicAPI served them on 3 Nov</div></div>
+      <div><div class="k">Results</div><div class="v">${REHEARSAL ? '<b>Rehearsal</b> · ' : ''}${DEMO !== null ? '<b>Demo</b> · ' : ''}${esc(source)}</div></div></div>` +
+      (testIgnored ? `<div class="banner warn"><b>civicAPI is running a test election right now.</b> Its invented results are ignored here, so nothing is scored until real races are called.</div>` : '') +
+      (DEMO !== null ? `<div class="banner warn"><b>Demo:</b> these results are invented from civicAPI's own chances, to show how the page reads. They are not real.</div>` : '') +
+      `<div id="list"></div>`;
+    app.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.ch) { S.ch = b.dataset.ch; history.replaceState(null, '', S.ch === 'all' ? location.pathname + location.search : '#' + S.ch); }
+      else if (b.dataset.sort) S.sort = b.dataset.sort;
+      else if (b.dataset.thin) S.thin = !S.thin;
+      else return;
+      render();
+    });
+    render();
+  } catch (e) {
+    console.error(e);
+    app.innerHTML = `<div class="banner warn"><b>Could not load the saved data.</b> ${esc(e.message)}. If you opened this file directly, serve the folder instead.</div>`;
+  }
+})();
+})();
+</script>
+</body>
+</html>

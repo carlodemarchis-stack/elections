@@ -175,3 +175,12 @@ Still to do:
 2. Run the URL through LinkedIn Post Inspector to force the preview scrape.
 3. Optional layers: FEC money-vs-votes, Polymarket/Kalshi odds line. Re-capture `og.png` on the
    night if the page looks better filled in.
+
+## Every source page (added 2026-11-04)
+
+`sources/index.html` scores every forecast civicAPI republishes (19 ids; the list is only in civicAPI's site code, the API has no index)
+against the results: right / Tossup ("so-so") / wrong per chamber, split firm (Safe, Likely) vs narrow (Lean, Tilt), plus a Brier score
+for those that publish odds. Forecasts come from `archive/baseline/sources-all.json`, frozen by `tools/freeze_all_sources.py`
+(2026-11-04 08:14 UTC, every source dated 3 Nov or earlier; `--force` to replace). PredictIt, Decision Desk HQ, RRH and OpenSourceZone are
+shown only on request (partial coverage or weeks old); `civicapi_experimental` returns nothing. Results come from the same cache feed as the
+scorecard; `?demo=0.6` invents a night.
